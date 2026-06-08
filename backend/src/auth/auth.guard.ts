@@ -2,11 +2,11 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
-export interface AuthenticatedUser {
-  id: string;
-  email: string;
-  role: 'USER' | 'ADMIN';
-  organizationId: string;
+export class AuthenticatedUser {
+  id!: string;
+  email!: string;
+  role!: 'USER' | 'ADMIN';
+  organizationId!: string;
 }
 
 @Injectable()
