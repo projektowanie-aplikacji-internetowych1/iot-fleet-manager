@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String       @id @default(uuid())
+  email          String       @unique
+  password       String
+  role           Role         @default(USER)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  users     User[]
+  devices   Device[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("organizations")
+}
+
+model Device {
+  id                  String          @id @default(uuid())
+  name                String
+  ipAddress           String
+  port                Int             @default(161)
+  authProtocol        AuthProtocol    @default(NONE)
+  authPasswordHash    String?         // Plaintext password/key string stored in db
+  privacyProtocol     PrivacyProtocol @default(NONE)
+  privacyPasswordHash String?         // Plaintext password/key string stored in db
+  snmpUsername        String          @default("bootstrapUser")
+  organizationId      String
+  organization        Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  metrics             DeviceMetric[]
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@map("devices")
+}
+
+enum AuthProtocol {
+  NONE
+  MD5
+  SHA
+}
+
+enum PrivacyProtocol {
+  NONE
+  DES
+  AES
+}
+
+model DeviceMetric {
+  id          String   @id @default(uuid())
+  deviceId    String
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  battery     Int
+  uptime      Int
+  status      String   // e.g. "ONLINE", "OFFLINE", "WARNING", "ERROR"
+  temperature Float
+  collectedAt DateTime @default(now())
+
+  @@index([deviceId, collectedAt])
+  @@map("device_metrics")
+}
