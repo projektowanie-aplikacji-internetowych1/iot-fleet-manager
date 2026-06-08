@@ -1,0 +1,106 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: iot-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: iot_fleet_manager
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: iot-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: iot-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres123@db:5432/iot_fleet_manager?schema=public"
+      PORT: 3000
+      JWT_SECRET: "super-secret-iot-jwt-key-998877"
+      REDIS_HOST: "redis"
+      REDIS_PORT: 6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: iot-frontend
+    restart: always
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+  mock-device-1:
+    build:
+      context: ./docker/snmp-mock
+      dockerfile: Dockerfile
+    container_name: mock-device-1
+    restart: always
+    environment:
+      BATTERY_SEED: 92
+      TEMP_SEED: 28
+      DEVICE_STATUS: 1
+      CONTAINER_NAME: "mock-device-1"
+    ports:
+      - "161:161/udp"
+
+  mock-device-2:
+    build:
+      context: ./docker/snmp-mock
+      dockerfile: Dockerfile
+    container_name: mock-device-2
+    restart: always
+    environment:
+      BATTERY_SEED: 48
+      TEMP_SEED: 38
+      DEVICE_STATUS: 2
+      CONTAINER_NAME: "mock-device-2"
+    ports:
+      - "162:161/udp"
+
+  mock-device-3:
+    build:
+      context: ./docker/snmp-mock
+      dockerfile: Dockerfile
+    container_name: mock-device-3
+    restart: always
+    environment:
+      BATTERY_SEED: 12
+      TEMP_SEED: 52
+      DEVICE_STATUS: 3
+      CONTAINER_NAME: "mock-device-3"
+    ports:
+      - "163:161/udp"
+
+volumes:
+  postgres_data:

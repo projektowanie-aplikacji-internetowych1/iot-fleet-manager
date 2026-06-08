@@ -37,7 +37,7 @@ async function main() {
 
   const userA = await prisma.user.create({
     data: {
-      email: 'userA@iot.com',
+      email: 'usera@iot.com',
       password: userPasswordHash,
       role: Role.USER,
       organizationId: orgA.id,
@@ -46,7 +46,7 @@ async function main() {
 
   const userB = await prisma.user.create({
     data: {
-      email: 'userB@iot.com',
+      email: 'userb@iot.com',
       password: userPasswordHash,
       role: Role.USER,
       organizationId: orgB.id,
@@ -55,8 +55,8 @@ async function main() {
 
   console.log(`Created users:
     - Admin: admin@iot.com (Pass: admin123, Org: SpaceX Fleet)
-    - User A: userA@iot.com (Pass: user123, Org: SpaceX Fleet)
-    - User B: userB@iot.com (Pass: user123, Org: Blue Origin Fleet)`);
+    - User A: usera@iot.com (Pass: user123, Org: SpaceX Fleet)
+    - User B: userb@iot.com (Pass: user123, Org: Blue Origin Fleet)`);
 
   const dev1 = await prisma.device.create({
     data: {

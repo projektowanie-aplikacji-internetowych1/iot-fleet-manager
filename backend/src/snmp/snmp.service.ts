@@ -15,11 +15,6 @@ export class SnmpService {
         '.1.3.6.1.4.1.9999.1.4',
       ];
 
-      const options: any = {
-        port: device.port,
-        version: snmp.Version3,
-      };
-
       let securityLevel = snmp.SecurityLevel.noAuthNoPriv;
       const user: any = {
         name: device.snmpUsername,
@@ -42,14 +37,17 @@ export class SnmpService {
       }
 
       user.level = securityLevel;
-      options.user = user;
 
-      options.timeout = 2500;
-      options.retries = 0;
+      const options: any = {
+        port: device.port,
+        version: snmp.Version3,
+        timeout: 2500,
+        retries: 0,
+      };
 
       this.logger.debug(`Polling device "${device.name}" at ${device.ipAddress}:${device.port} using SNMPv3 (Level: ${securityLevel})`);
 
-      const session = snmp.createSession(device.ipAddress, options);
+      const session = snmp.createV3Session(device.ipAddress, user, options);
 
       session.get(oids, (error: any, varbinds: any[]) => {
         if (error) {
