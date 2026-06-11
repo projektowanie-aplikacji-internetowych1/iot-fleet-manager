@@ -194,3 +194,38 @@ Poniższa instrukcja prowadzi krok po kroku przez wszystkie kluczowe funkcjonaln
 1. Wyloguj się z aplikacji.
 2. Spróbuj wejść bezpośrednio na adres [http://localhost:5173/dashboard](http://localhost:5173/dashboard).
 3. **Oczekiwany wynik:** Aplikacja automatycznie przekierowuje na stronę logowania, ponieważ brak tokenu JWT.
+
+---
+
+## Automatyczne Testy End-to-End
+
+Oprócz testów manualnych, w projekcie dostępny jest skrypt automatycznych testów E2E, który weryfikuje **90 przypadków testowych** pokrywających wszystkie kluczowe funkcjonalności API.
+
+### Wymagania:
+- Działające środowisko Docker (`docker compose up --build`)
+- Node.js 18+ zainstalowany lokalnie (wbudowane API `fetch`)
+
+### Uruchomienie:
+```bash
+node e2e/run-tests.mjs
+```
+
+### Pokrycie testów E2E:
+
+| Moduł testowy | Liczba testów | Co weryfikuje |
+| :--- | :---: | :--- |
+| Health Check | 4 | Endpoint `/health`, poprawność pól odpowiedzi |
+| Strona Powitalna | 2 | Dostępność strony głównej API |
+| Logowanie (Auth) | 12 | Logowanie 6 użytkowników, błędne hasła, nieistniejące konta |
+| Rejestracja | 4 | Tworzenie nowego konta, duplikacja e-maila |
+| Dostęp Nieautoryzowany | 4 | Brak tokenu JWT, fałszywy token |
+| Organizacje | 7 | Lista i szczegóły organizacji |
+| Multi-Tenancy | 14 | Izolacja urządzeń per organizacja dla 5 użytkowników |
+| Szczegóły Urządzenia | 9 | Pola konfiguracji SNMPv3 |
+| Metryki Urządzenia | 8 | Dane telemetryczne z pollingu SNMP |
+| CRUD Urządzeń | 9 | Dodawanie, widoczność, usuwanie urządzenia |
+| Walidacja Danych | 4 | Brak wymaganych pól, port poza zakresem, błędny enum |
+| Obsługa Błędów (404) | 2 | Pobieranie/usuwanie nieistniejącego urządzenia |
+| Analityka (OLAP) | 11 | Agregacje baterii i statusów, filtrowanie per organizacja |
+| **Razem** | **90** | |
+
