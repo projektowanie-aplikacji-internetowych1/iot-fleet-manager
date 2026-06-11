@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
-import { Cpu, Mail, Lock, Building, Shield, AlertTriangle } from 'lucide-react';
+import { Cpu, Mail, Lock, Building, Shield, AlertTriangle, User } from 'lucide-react';
+
+import { translateError } from '../utils/errors';
 
 export const Register: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -26,7 +28,7 @@ export const Register: React.FC = () => {
       });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Błąd podczas rejestracji');
+      setError(translateError(err.message));
     } finally {
       setLoading(false);
     }
@@ -129,6 +131,7 @@ export const Register: React.FC = () => {
                       : 'bg-slate-900/20 border-slate-800 text-slate-400 hover:border-slate-700'
                     }`}
                 >
+                  <User size={14} />
                   Użytkownik
                 </button>
                 <button

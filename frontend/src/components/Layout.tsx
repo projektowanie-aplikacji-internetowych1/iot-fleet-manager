@@ -30,6 +30,62 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     },
   ];
 
+  if (currentUser) {
+    if (currentUser.role === 'ADMIN') {
+      navItems.push({
+        name: 'Użytkownicy',
+        path: '/users',
+        icon: <User size={20} />,
+      });
+    } else {
+      navItems.push({
+        name: 'Mój Profil',
+        path: '/profile',
+        icon: <User size={20} />,
+      });
+    }
+  }
+
+  const getHeaderInfo = () => {
+    const path = location.pathname;
+    if (path === '/dashboard') {
+      return {
+        title: 'Panel Główny',
+        desc: 'Przegląd telemetryczny i agregaty stanu floty urządzeń',
+      };
+    }
+    if (path === '/devices') {
+      return {
+        title: 'Zarządzanie Flotą Urządzeń',
+        desc: 'Konfiguracja, dodawanie, usuwanie i podgląd szczegółów urządzeń IoT',
+      };
+    }
+    if (path === '/users') {
+      return {
+        title: 'Zarządzanie Użytkownikami',
+        desc: 'Dodawanie, edycja i przydzielanie użytkowników do organizacji',
+      };
+    }
+    if (path === '/profile') {
+      return {
+        title: 'Mój Profil Użytkownika',
+        desc: 'Podgląd i aktualizacja danych osobowych oraz hasła',
+      };
+    }
+    if (path.startsWith('/devices/')) {
+      return {
+        title: 'Szczegóły Urządzenia',
+        desc: 'Szczegółowa analityka telemetryczna i historia pomiarów',
+      };
+    }
+    return {
+      title: 'System Zarządzania Flotą',
+      desc: 'IoT Fleet Manager panel administracyjny',
+    };
+  };
+
+  const header = getHeaderInfo();
+
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans">
       <aside className="w-64 glass-panel border-r border-slate-900 flex flex-col justify-between p-6">
@@ -82,7 +138,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <span>Administrator</span>
                       </>
                     ) : (
-                      <span>Użytkownik</span>
+                      <>
+                        <User size={10} className="text-brand-indigo/80" />
+                        <span>Użytkownik</span>
+                      </>
                     )}
                   </p>
                 </div>
@@ -111,12 +170,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <header className="py-5 px-8 flex justify-between items-center border-b border-slate-900/60 bg-slate-950/45 backdrop-blur-md">
           <div>
             <h2 className="text-xl font-bold text-white">
-              {location.pathname === '/dashboard' ? 'Panel Główny' : 'Zarządzanie Flotą Urządzeń'}
+              {header.title}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              {location.pathname === '/dashboard'
-                ? 'Przegląd telemetryczny i agregaty stanu floty urządzeń'
-                : 'Konfiguracja, dodawanie, usuwanie i podgląd szczegółów urządzeń IoT'}
+              {header.desc}
             </p>
           </div>
           <div className="flex items-center gap-2">

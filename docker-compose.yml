@@ -67,8 +67,12 @@ services:
     container_name: mock-device-1
     restart: always
     environment:
-      BATTERY_SEED: 92
-      TEMP_SEED: 28
+      BATTERY_SEED: 95
+      BATTERY_DRAIN_SPEED: 0.5
+      TEMP_SEED: 24
+      TEMP_FLUCTUATION: 3
+      SIGNAL_SEED: -45
+      MEMORY_SEED: 25
       DEVICE_STATUS: 1
       CONTAINER_NAME: "mock-device-1"
     ports:
@@ -81,9 +85,13 @@ services:
     container_name: mock-device-2
     restart: always
     environment:
-      BATTERY_SEED: 48
-      TEMP_SEED: 38
-      DEVICE_STATUS: 2
+      BATTERY_SEED: 80
+      BATTERY_DRAIN_SPEED: 1.2
+      TEMP_SEED: 31
+      TEMP_FLUCTUATION: 4.5
+      SIGNAL_SEED: -60
+      MEMORY_SEED: 40
+      DEVICE_STATUS: 1
       CONTAINER_NAME: "mock-device-2"
     ports:
       - "162:161/udp"
@@ -95,12 +103,142 @@ services:
     container_name: mock-device-3
     restart: always
     environment:
-      BATTERY_SEED: 12
-      TEMP_SEED: 52
-      DEVICE_STATUS: 3
+      BATTERY_SEED: 100
+      BATTERY_DRAIN_SPEED: 0.1
+      TEMP_SEED: 18
+      TEMP_FLUCTUATION: 1.5
+      SIGNAL_SEED: -50
+      MEMORY_SEED: 15
+      DEVICE_STATUS: 1
       CONTAINER_NAME: "mock-device-3"
     ports:
       - "163:161/udp"
+
+  mock-device-4:
+    build:
+      context: ./docker/snmp-mock
+      dockerfile: Dockerfile
+    container_name: mock-device-4
+    restart: always
+    environment:
+      BATTERY_SEED: 65
+      BATTERY_DRAIN_SPEED: 2.5
+      TEMP_SEED: 12
+      TEMP_FLUCTUATION: 8
+      SIGNAL_SEED: -85
+      MEMORY_SEED: 75
+      DEVICE_STATUS: 1
+      CONTAINER_NAME: "mock-device-4"
+    ports:
+      - "164:161/udp"
+
+  mock-device-5:
+    build:
+      context: ./docker/snmp-mock
+      dockerfile: Dockerfile
+    container_name: mock-device-5
+    restart: always
+    environment:
+      BATTERY_SEED: 99
+      BATTERY_DRAIN_SPEED: 0.8
+      TEMP_SEED: 28
+      TEMP_FLUCTUATION: 4
+      SIGNAL_SEED: -55
+      MEMORY_SEED: 30
+      DEVICE_STATUS: 1
+      CONTAINER_NAME: "mock-device-5"
+    ports:
+      - "165:161/udp"
+
+  mock-device-6:
+    build:
+      context: ./docker/snmp-mock
+      dockerfile: Dockerfile
+    container_name: mock-device-6
+    restart: always
+    environment:
+      BATTERY_SEED: 85
+      BATTERY_DRAIN_SPEED: 0.05
+      TEMP_SEED: 20
+      TEMP_FLUCTUATION: 1
+      SIGNAL_SEED: -48
+      MEMORY_SEED: 12
+      DEVICE_STATUS: 1
+      CONTAINER_NAME: "mock-device-6"
+    ports:
+      - "166:161/udp"
+
+  mock-device-7:
+    build:
+      context: ./docker/snmp-mock
+      dockerfile: Dockerfile
+    container_name: mock-device-7
+    restart: always
+    environment:
+      BATTERY_SEED: 100
+      BATTERY_DRAIN_SPEED: 0
+      TEMP_SEED: 35
+      TEMP_FLUCTUATION: 5
+      SIGNAL_SEED: -30
+      MEMORY_SEED: 65
+      DEVICE_STATUS: 1
+      CONTAINER_NAME: "mock-device-7"
+    ports:
+      - "167:161/udp"
+
+#  mock-device-8:
+#    build:
+#      context: ./docker/snmp-mock
+#      dockerfile: Dockerfile
+#    container_name: mock-device-8
+#    restart: always
+#    environment:
+#      BATTERY_SEED: 75
+#      BATTERY_DRAIN_SPEED: 1.5
+#      TEMP_SEED: 22
+#      TEMP_FLUCTUATION: 3.5
+#      SIGNAL_SEED: -65
+#      MEMORY_SEED: 45
+#      DEVICE_STATUS: 1
+#      CONTAINER_NAME: "mock-device-8"
+#    ports:
+#      - "168:161/udp"
+
+  mock-device-9:
+    build:
+      context: ./docker/snmp-mock
+      dockerfile: Dockerfile
+    container_name: mock-device-9
+    restart: always
+    environment:
+      BATTERY_SEED: 90
+      BATTERY_DRAIN_SPEED: 0.2
+      TEMP_SEED: 25
+      TEMP_FLUCTUATION: 2
+      SIGNAL_SEED: -58
+      MEMORY_SEED: 20
+      DEVICE_STATUS: 1
+      CONTAINER_NAME: "mock-device-9"
+    ports:
+      - "169:161/udp"
+
+  mock-device-10:
+    build:
+      context: ./docker/snmp-mock
+      dockerfile: Dockerfile
+    container_name: mock-device-10
+    restart: always
+    environment:
+      BATTERY_SEED: 100
+      BATTERY_DRAIN_SPEED: 0
+      TEMP_SEED: 42
+      TEMP_FLUCTUATION: 2.5
+      SIGNAL_SEED: -40
+      MEMORY_SEED: 88
+      DEVICE_STATUS: 1
+      CONTAINER_NAME: "mock-device-10"
+    ports:
+      - "170:161/udp"
 
 volumes:
   postgres_data:

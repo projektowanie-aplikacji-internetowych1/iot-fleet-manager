@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { ResponsiveContainer, AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { ArrowLeft, RefreshCw, Cpu, Server, Key, Calendar, Activity, Battery, Thermometer, Clock } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Cpu, Server, Key, Calendar, Activity, Battery, Thermometer, Clock, Wifi, HardDrive } from 'lucide-react';
 
 interface MetricPoint {
   id: string;
@@ -10,6 +10,8 @@ interface MetricPoint {
   uptime: number;
   temperature: number;
   status: string;
+  signalStrength: number;
+  memoryUsage: number;
   collectedAt: string;
 }
 
@@ -126,12 +128,16 @@ export const DeviceDetails: React.FC = () => {
   const currentUptime = latestMetric ? latestMetric.uptime : 0;
   const currentTemp = latestMetric ? latestMetric.temperature : 0;
   const currentBattery = latestMetric ? latestMetric.battery : 0;
+  const currentSignal = latestMetric ? (latestMetric.signalStrength ?? -50) : -100;
+  const currentMemory = latestMetric ? (latestMetric.memoryUsage ?? 30) : 0;
 
   const chartData = [...metrics].map((m) => ({
     time: formatTime(m.collectedAt),
     'Bateria (%)': m.battery,
     'Temperatura (°C)': m.temperature,
     'Czas Uptime (s)': m.uptime,
+    'Sygnał (dBm)': m.signalStrength ?? -100,
+    'Zużycie RAM (%)': m.memoryUsage ?? 0,
   }));
 
   const getStatusText = (status: string) => {
@@ -166,7 +172,7 @@ export const DeviceDetails: React.FC = () => {
         <div className="flex items-center gap-4">
           <Link
             to="/devices"
-            className="p-2.5 bg-slate-900/50 hover:bg-slate-900 border border-slate-850 hover:border-slate-800 text-slate-400 hover:text-white rounded-xl transition-all"
+            className="p-2.5 bg-slate-900/50 hover:bg-slate-900 border border-slate-855 hover:border-slate-800 text-slate-400 hover:text-white rounded-xl transition-all"
           >
             <ArrowLeft size={16} />
           </Link>
@@ -186,48 +192,65 @@ export const DeviceDetails: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="glass-panel p-6 rounded-2xl flex items-center gap-4">
-          <div className={`p-3 rounded-xl border ${getStatusBadgeClass(currentStatus)}`}>
-            <Activity size={20} />
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-5">
+        <div className="glass-panel p-4 rounded-2xl flex items-center gap-3">
+          <div className={`p-2.5 rounded-xl border ${getStatusBadgeClass(currentStatus)}`}>
+            <Activity size={16} />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status SNMP</p>
-            <p className="text-xs font-extrabold text-slate-200 mt-1 uppercase">{currentStatus}</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">{getStatusText(currentStatus)}</p>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Status SNMP</p>
+            <p className="text-xs font-extrabold text-slate-200 mt-0.5 uppercase">{currentStatus}</p>
+            <p className="text-[8px] text-slate-500 mt-0.5">{getStatusText(currentStatus)}</p>
           </div>
         </div>
 
-        <div className="glass-panel p-6 rounded-2xl flex items-center gap-4">
-          <div className="bg-brand-cyan/10 p-3 rounded-xl border border-brand-cyan/20 text-brand-cyan">
-            <Battery size={20} />
+        <div className="glass-panel p-4 rounded-2xl flex items-center gap-3">
+          <div className="bg-brand-cyan/10 p-2.5 rounded-xl border border-brand-cyan/20 text-brand-cyan">
+            <Battery size={16} />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Poziom Baterii</p>
-            <p className="text-xl font-extrabold text-white mt-1">{currentStatus === 'OFFLINE' ? '—' : `${currentBattery}%`}</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">Zasilanie ogniw litowych</p>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Poziom Baterii</p>
+            <p className="text-sm font-extrabold text-white mt-0.5">{currentStatus === 'OFFLINE' ? '—' : `${currentBattery}%`}</p>
           </div>
         </div>
 
-        <div className="glass-panel p-6 rounded-2xl flex items-center gap-4">
-          <div className="bg-orange-500/10 p-3 rounded-xl border border-orange-500/20 text-orange-500">
-            <Thermometer size={20} />
+        <div className="glass-panel p-4 rounded-2xl flex items-center gap-3">
+          <div className="bg-orange-500/10 p-2.5 rounded-xl border border-orange-500/20 text-orange-500">
+            <Thermometer size={16} />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Temperatura OID</p>
-            <p className="text-xl font-extrabold text-white mt-1">{currentStatus === 'OFFLINE' ? '—' : `${currentTemp}°C`}</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">Odczyt sensora pokładowego</p>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Temperatura</p>
+            <p className="text-sm font-extrabold text-white mt-0.5">{currentStatus === 'OFFLINE' ? '—' : `${currentTemp}°C`}</p>
           </div>
         </div>
 
-        <div className="glass-panel p-6 rounded-2xl flex items-center gap-4">
-          <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 text-emerald-500">
-            <Clock size={20} />
+        <div className="glass-panel p-4 rounded-2xl flex items-center gap-3">
+          <div className="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 text-emerald-500">
+            <Clock size={16} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Czas Pracy</p>
+            <p className="text-xs font-extrabold text-white mt-0.5 truncate">{currentStatus === 'OFFLINE' ? '—' : formatUptime(currentUptime)}</p>
+          </div>
+        </div>
+
+        <div className="glass-panel p-4 rounded-2xl flex items-center gap-3">
+          <div className="bg-indigo-500/10 p-2.5 rounded-xl border border-indigo-500/20 text-indigo-400">
+            <HardDrive size={16} />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Czas Pracy (Uptime)</p>
-            <p className="text-sm font-extrabold text-white mt-1.5 truncate max-w-[150px]">{currentStatus === 'OFFLINE' ? '—' : formatUptime(currentUptime)}</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">Nieprzerwane działanie</p>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Zużycie RAM</p>
+            <p className="text-sm font-extrabold text-white mt-0.5">{currentStatus === 'OFFLINE' ? '—' : `${currentMemory}%`}</p>
+          </div>
+        </div>
+
+        <div className="glass-panel p-4 rounded-2xl flex items-center gap-3">
+          <div className="bg-teal-500/10 p-2.5 rounded-xl border border-teal-500/20 text-teal-400">
+            <Wifi size={16} />
+          </div>
+          <div>
+            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Moc Sygnału</p>
+            <p className="text-sm font-extrabold text-white mt-0.5">{currentStatus === 'OFFLINE' ? '—' : `${currentSignal} dBm`}</p>
           </div>
         </div>
       </div>
@@ -391,6 +414,91 @@ export const DeviceDetails: React.FC = () => {
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#uptimeGrad)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="glass-panel p-6 rounded-2xl flex flex-col h-[300px]">
+          <h4 className="text-sm font-extrabold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+            <HardDrive size={16} className="text-indigo-400" />
+            <span>Wykres Zużycia Pamięci RAM (%)</span>
+          </h4>
+          {chartData.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center text-slate-500 text-xs">
+              Brak historii odczytów dla tego urządzenia
+            </div>
+          ) : (
+            <div className="flex-1 min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.02)" />
+                  <XAxis dataKey="time" stroke="#475569" fontSize={9} tickLine={false} />
+                  <YAxis domain={[0, 100]} stroke="#475569" fontSize={9} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderColor: '#1e293b',
+                      borderRadius: '12px',
+                      color: '#cbd5e1',
+                      fontSize: '11px',
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="Zużycie RAM (%)"
+                    stroke="#818cf8"
+                    strokeWidth={2.5}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+
+        <div className="glass-panel p-6 rounded-2xl flex flex-col h-[300px]">
+          <h4 className="text-sm font-extrabold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+            <Wifi size={16} className="text-teal-400" />
+            <span>Wykres Mocy Sygnału RSSI (dBm)</span>
+          </h4>
+          {chartData.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center text-slate-500 text-xs">
+              Brak historii odczytów dla tego urządzenia
+            </div>
+          ) : (
+            <div className="flex-1 min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="signalGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2dd4bf" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#2dd4bf" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.02)" />
+                  <XAxis dataKey="time" stroke="#475569" fontSize={9} tickLine={false} />
+                  <YAxis domain={[-100, 0]} stroke="#475569" fontSize={9} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderColor: '#1e293b',
+                      borderRadius: '12px',
+                      color: '#cbd5e1',
+                      fontSize: '11px',
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="Sygnał (dBm)"
+                    stroke="#2dd4bf"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#signalGrad)"
                   />
                 </AreaChart>
               </ResponsiveContainer>

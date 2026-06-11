@@ -72,14 +72,16 @@ enum PrivacyProtocol {
 }
 
 model DeviceMetric {
-  id          String   @id @default(uuid())
-  deviceId    String
-  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  battery     Int
-  uptime      Int
-  status      String   // e.g. "ONLINE", "OFFLINE", "WARNING", "ERROR"
-  temperature Float
-  collectedAt DateTime @default(now())
+  id             String   @id @default(uuid())
+  deviceId       String
+  device         Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  battery        Int
+  uptime         Int
+  status         String   // e.g. "ONLINE", "OFFLINE", "WARNING", "ERROR"
+  temperature    Float
+  signalStrength Int      @default(-50)
+  memoryUsage    Int      @default(30)
+  collectedAt    DateTime @default(now())
 
   @@index([deviceId, collectedAt])
   @@map("device_metrics")

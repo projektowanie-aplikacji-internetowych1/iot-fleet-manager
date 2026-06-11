@@ -46,15 +46,15 @@ Wszystkie serwisy systemu mogą zostać uruchomione jedną komendą:
 
 ## Konta Demonstracyjne
 
-Po starcie bazy danych, seeder automatycznie tworzy testową strukturę **3 organizacji**, **6 użytkowników** oraz **5 urządzeń IoT**:
+Po starcie bazy danych, seeder automatycznie tworzy testową strukturę **3 organizacji**, **6 użytkowników** oraz **10 urządzeń IoT**:
 
 ### Organizacje
 
-| Nazwa organizacji | Liczba użytkowników | Liczba urządzeń |
-| :--- | :---: | :---: |
-| **SpaceX Fleet** | 3 (1 Admin + 2 User) | 2 (Drone Alpha, Drone Beta) |
-| **Blue Origin Fleet** | 2 (1 Admin + 1 User) | 2 (Drone Gamma, Drone Delta) |
-| **DJI Enterprise** | 1 (1 User) | 1 (Sensor Hub X1) |
+| Nazwa organizacji | Liczba użytkowników | Liczba urządzeń | Domyślne urządzenia |
+| :--- | :---: | :---: | :--- |
+| **SpaceX Fleet** | 3 (1 Admin + 2 User) | 4 | Drone Alpha, Drone Beta, Sensor Temp-1, Mars Rover X |
+| **Blue Origin Fleet** | 2 (1 Admin + 1 User) | 3 | Drone Gamma, Sensor Press-2, Gateway Lunar |
+| **DJI Enterprise** | 1 (1 User) | 3 | Drone Delta, Sensor Humid-3, Security Cam-1 |
 
 ### Użytkownicy
 
@@ -62,20 +62,81 @@ Po starcie bazy danych, seeder automatycznie tworzy testową strukturę **3 orga
 | :--- | :--- | :--- | :--- | :--- |
 | **admin@iot.com** | `admin123` | **ADMIN** | SpaceX Fleet | Wszystkie urządzenia w systemie |
 | **adminb@iot.com** | `admin123` | **ADMIN** | Blue Origin Fleet | Wszystkie urządzenia w systemie |
-| **usera@iot.com** | `user123` | **USER** | SpaceX Fleet | Drone Alpha, Drone Beta |
-| **userd@iot.com** | `user123` | **USER** | SpaceX Fleet | Drone Alpha, Drone Beta |
-| **userb@iot.com** | `user123` | **USER** | Blue Origin Fleet | Drone Gamma, Drone Delta |
-| **userc@iot.com** | `user123` | **USER** | DJI Enterprise | Sensor Hub X1 |
+| **usera@iot.com** | `user123` | **USER** | SpaceX Fleet | Drone Alpha, Drone Beta, Sensor Temp-1, Mars Rover X |
+| **userd@iot.com** | `user123` | **USER** | SpaceX Fleet | Drone Alpha, Drone Beta, Sensor Temp-1, Mars Rover X |
+| **userb@iot.com** | `user123` | **USER** | Blue Origin Fleet | Drone Gamma, Sensor Press-2, Gateway Lunar |
+| **userc@iot.com** | `user123` | **USER** | DJI Enterprise | Drone Delta, Sensor Humid-3, Security Cam-1 |
 
 ### Urządzenia IoT
 
-| Nazwa urządzenia | Adres IP (host Docker) | Port | Protokół Auth | Protokół Priv | Organizacja |
-| :--- | :--- | :---: | :--- | :--- | :--- |
-| **Drone Alpha** | `mock-device-1` | 161 | SHA | AES | SpaceX Fleet |
-| **Drone Beta** | `mock-device-2` | 161 | SHA | AES | SpaceX Fleet |
-| **Drone Gamma** | `mock-device-3` | 161 | SHA | AES | Blue Origin Fleet |
-| **Drone Delta** | `mock-device-2` | 161 | SHA | AES | Blue Origin Fleet |
-| **Sensor Hub X1** | `mock-device-1` | 161 | SHA | AES | DJI Enterprise |
+| Nazwa urządzenia | Typ | Adres IP (host Docker) | Port | Protokół Auth | Protokół Priv | Organizacja |
+| :--- | :--- | :--- | :---: | :--- | :--- | :--- |
+| **Drone Alpha** | Drone | `mock-device-1` | 161 | SHA | AES | SpaceX Fleet |
+| **Drone Beta** | Drone | `mock-device-2` | 161 | SHA | AES | SpaceX Fleet |
+| **Sensor Temp-1** | Sensor | `mock-device-3` | 161 | SHA | AES | SpaceX Fleet |
+| **Mars Rover X** | Rover | `mock-device-4` | 161 | SHA | AES | SpaceX Fleet |
+| **Drone Gamma** | Drone | `mock-device-5` | 161 | SHA | AES | Blue Origin Fleet |
+| **Sensor Press-2** | Sensor | `mock-device-6` | 161 | SHA | AES | Blue Origin Fleet |
+| **Gateway Lunar** | Gateway | `mock-device-7` | 161 | SHA | AES | Blue Origin Fleet |
+| **Drone Delta** | Drone | `mock-device-8` (OFFLINE) | 161 | SHA | AES | DJI Enterprise |
+| **Sensor Humid-3** | Sensor | `mock-device-9` | 161 | SHA | AES | DJI Enterprise |
+| **Security Cam-1** | Camera | `mock-device-10` | 161 | SHA | AES | DJI Enterprise |
+
+## Dodawanie i Konfiguracja Nowych Urządzeń
+
+W systemie IoT Fleet Manager możesz elastycznie rozszerzać flotę monitorowanych dronów i sensorów. Działa to dwuetapowo: od strony panelu użytkownika oraz opcjonalnie w środowisku deweloperskim od strony wirtualnych kontenerów Docker.
+
+### 1. Dodawanie urządzenia z poziomu Panelu Użytkownika
+
+Użytkownik z rolą Administratora lub zalogowany członek danej organizacji może dodać nowe urządzenie za pomocą przycisku **Dodaj urządzenie** na liście urządzeń (`/devices`).
+
+* **Scenariusz A (Urządzenie istnieje w sieci):**
+  Jeśli podasz adres IP rzeczywistego fizycznego urządzenia w sieci lokalnej lub działającego kontenera Docker, które ma poprawnie skonfigurowanego agenta SNMPv3 z tymi samymi poświadczeniami, system automatycznie nawiąże z nim połączenie i pobierze unikalne, rzeczywiste dane telemetryczne.
+
+* **Scenariusz B (Urządzenie nie istnieje / błędny adres IP):**
+  Jeśli wpiszesz losowy lub błędny adres IP np. `192.168.1.99` lub `mock-device-99`, pod którym nie działa żaden agent SNMP, próba połączenia w tle odbywająca się cyklicznie co 30 sekund zakończy się niepowodzeniem. W takim przypadku system zapisze w bazie informację, że urządzenie jest **OFFLINE**, a wykresy oraz parametry na karcie szczegółów urządzenia nie wyświetlą żadnych danych telemetrycznych.
+
+---
+
+### 2. Dodawanie nowego, unikalnego urządzenia testowego w środowisku Docker
+
+Jeśli chcesz przetestować dodanie kolejnego wirtualnego urządzenia z unikalnymi wartościami telemetrycznymi w środowisku lokalnym:
+
+1. Otwórz plik `docker-compose.yml` i dodaj kolejny serwis (np. `mock-device-6`):
+   ```yaml
+     mock-device-6:
+       build:
+         context: ./docker/snmp-mock
+         dockerfile: Dockerfile
+       container_name: mock-device-6
+       restart: always
+       environment:
+         CONTAINER_NAME: "mock-device-6"
+         BATTERY_SEED: 95
+         BATTERY_DRAIN_SPEED: 0.8
+         TEMP_SEED: 22
+         TEMP_FLUCTUATION: 4.5
+         SIGNAL_SEED: -65
+         MEMORY_SEED: 45
+       ports:
+         - "166:161/udp"
+   ```
+2. Uruchom nowy kontener w terminalu:
+   ```bash
+   docker compose up -d mock-device-6
+   ```
+3. Zaloguj się do panelu aplikacji i dodaj nowe urządzenie wpisując:
+   * **Nazwa urządzenia:** np. `Drone Epsilon`
+   * **Adres IP / Host:** `mock-device-6`
+   * **Port UDP:** `161`
+4. **Efekt:** System w tle nawiąże komunikację z nowo powstałym kontenerem i po pierwszym cyklu odpytywania zacznie rejestrować unikalne odczyty zaczynające się od baterii 95% (która będzie spadać z szybkością 0.8%/cykl) oraz temperatury oscylującej w granicach +/- 4.5°C od 22°C.
+5. **Konfigurowalne parametry środowiskowe symulatora:**
+   * `BATTERY_SEED` - Wartość początkowa baterii (domyślnie `100`).
+   * `BATTERY_DRAIN_SPEED` - Prędkość rozładowywania na cykl (domyślnie `0.2`). Jeśli ustawiona na `0`, bateria nie rozładowuje się.
+   * `TEMP_SEED` - Wartość początkowa/średnia temperatury (domyślnie `25`).
+   * `TEMP_FLUCTUATION` - Maksymalna amplituda losowych zmian temperatury na cykl (domyślnie `1.0`).
+   * `SIGNAL_SEED` - Bazowa moc sygnału RSSI w dBm (domyślnie `-50`).
+   * `MEMORY_SEED` - Bazowy poziom procentowy użycia pamięci RAM (domyślnie `35`).
 
 ---
 

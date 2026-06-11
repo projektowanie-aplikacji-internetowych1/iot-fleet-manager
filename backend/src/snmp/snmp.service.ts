@@ -6,13 +6,22 @@ import * as snmp from 'net-snmp';
 export class SnmpService {
   private readonly logger = new Logger(SnmpService.name);
 
-  async pollDevice(device: Device): Promise<{ battery: number; uptime: number; status: string; temperature: number }> {
+  async pollDevice(device: Device): Promise<{
+    battery: number;
+    uptime: number;
+    status: string;
+    temperature: number;
+    signalStrength: number;
+    memoryUsage: number;
+  }> {
     return new Promise((resolve, reject) => {
       const oids = [
         '1.3.6.1.4.1.9999.1.1',
         '1.3.6.1.4.1.9999.1.2',
         '1.3.6.1.4.1.9999.1.3',
         '1.3.6.1.4.1.9999.1.4',
+        '1.3.6.1.4.1.9999.1.5',
+        '1.3.6.1.4.1.9999.1.6',
       ];
 
       let securityLevel = snmp.SecurityLevel.noAuthNoPriv;
@@ -72,11 +81,15 @@ export class SnmpService {
           const rawUptime = getMetric('1.3.6.1.4.1.9999.1.2');
           const rawStatus = getMetric('1.3.6.1.4.1.9999.1.3');
           const rawTemp = getMetric('1.3.6.1.4.1.9999.1.4');
+          const rawSignal = getMetric('1.3.6.1.4.1.9999.1.5');
+          const rawMemory = getMetric('1.3.6.1.4.1.9999.1.6');
 
           const battery = typeof rawBattery === 'number' ? rawBattery : parseInt(rawBattery?.toString() || '0', 10);
           const uptime = typeof rawUptime === 'number' ? rawUptime : parseInt(rawUptime?.toString() || '0', 10);
           const statusNum = typeof rawStatus === 'number' ? rawStatus : parseInt(rawStatus?.toString() || '1', 10);
           const temperature = typeof rawTemp === 'number' ? rawTemp : parseFloat(rawTemp?.toString() || '0');
+          const signalStrength = typeof rawSignal === 'number' ? rawSignal : parseInt(rawSignal?.toString() || '-50', 10);
+          const memoryUsage = typeof rawMemory === 'number' ? rawMemory : parseInt(rawMemory?.toString() || '30', 10);
 
           let status = 'ONLINE';
           if (statusNum === 2) status = 'WARNING';
@@ -84,7 +97,7 @@ export class SnmpService {
           if (statusNum === 4) status = 'MAINTENANCE';
 
           session.close();
-          resolve({ battery, uptime, status, temperature });
+          resolve({ battery, uptime, status, temperature, signalStrength, memoryUsage });
         } catch (parseError) {
           session.close();
           reject(parseError);

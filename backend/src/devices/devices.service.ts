@@ -82,6 +82,41 @@ export class DevicesService {
     });
   }
 
+  async update(id: string, dto: CreateDeviceDto, userOrgId: string, isAdmin: boolean) {
+    const device = await this.prisma.device.findUnique({
+      where: { id },
+    });
+    if (!device) {
+      throw new NotFoundException(`Device with ID ${id} not found`);
+    }
+
+    let targetOrgId = device.organizationId;
+    if (isAdmin && dto.organizationId) {
+      targetOrgId = dto.organizationId;
+      const org = await this.prisma.organization.findUnique({
+        where: { id: targetOrgId },
+      });
+      if (!org) {
+        throw new BadRequestException('Target organization does not exist');
+      }
+    }
+
+    return this.prisma.device.update({
+      where: { id },
+      data: {
+        name: dto.name,
+        ipAddress: dto.ipAddress,
+        port: dto.port ?? 161,
+        authProtocol: dto.authProtocol ?? 'NONE',
+        authPasswordHash: dto.authPasswordHash !== undefined ? dto.authPasswordHash : undefined,
+        privacyProtocol: dto.privacyProtocol ?? 'NONE',
+        privacyPasswordHash: dto.privacyPasswordHash !== undefined ? dto.privacyPasswordHash : undefined,
+        snmpUsername: dto.snmpUsername ?? 'bootstrapUser',
+        organizationId: targetOrgId,
+      },
+    });
+  }
+
   async getDeviceMetrics(deviceId: string, limit: number = 50) {
     const metrics = await this.prisma.deviceMetric.findMany({
       where: { deviceId },

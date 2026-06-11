@@ -37,10 +37,12 @@ export class TasksProcessor extends WorkerHost {
             uptime: metrics.uptime,
             status: metrics.status,
             temperature: metrics.temperature,
+            signalStrength: metrics.signalStrength,
+            memoryUsage: metrics.memoryUsage,
           },
         });
 
-        this.logger.debug(`Device "${device.name}" (${device.ipAddress}) polled: Battery=${metrics.battery}%, Temp=${metrics.temperature}°C, Status=${metrics.status}`);
+        this.logger.debug(`Device "${device.name}" (${device.ipAddress}) polled: Battery=${metrics.battery}%, Temp=${metrics.temperature}°C, Status=${metrics.status}, RSSI=${metrics.signalStrength}dBm, RAM=${metrics.memoryUsage}%`);
       } catch (error: any) {
         this.logger.warn(`Failed to poll device "${device.name}" (${device.ipAddress}): ${error.message || error}`);
 
@@ -51,6 +53,8 @@ export class TasksProcessor extends WorkerHost {
             uptime: 0,
             status: 'OFFLINE',
             temperature: 0,
+            signalStrength: -100,
+            memoryUsage: 0,
           },
         });
       }

@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { Cpu, Mail, Lock, AlertTriangle } from 'lucide-react';
 
+import { translateError } from '../utils/errors';
+
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,7 +21,7 @@ export const Login: React.FC = () => {
       await api.login({ email, password });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Niepoprawne dane logowania');
+      setError(translateError(err.message));
     } finally {
       setLoading(false);
     }

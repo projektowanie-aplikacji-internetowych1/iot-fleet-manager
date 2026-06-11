@@ -123,8 +123,36 @@ async function main() {
 
   const dev3 = await prisma.device.create({
     data: {
-      name: 'Drone Gamma',
+      name: 'Sensor Temp-1',
       ipAddress: 'mock-device-3',
+      port: 161,
+      authProtocol: AuthProtocol.SHA,
+      authPasswordHash: 'authPassword123',
+      privacyProtocol: PrivacyProtocol.AES,
+      privacyPasswordHash: 'privPassword456',
+      snmpUsername: 'bootstrapUser',
+      organizationId: orgA.id,
+    },
+  });
+
+  const dev4 = await prisma.device.create({
+    data: {
+      name: 'Mars Rover X',
+      ipAddress: 'mock-device-4',
+      port: 161,
+      authProtocol: AuthProtocol.SHA,
+      authPasswordHash: 'authPassword123',
+      privacyProtocol: PrivacyProtocol.AES,
+      privacyPasswordHash: 'privPassword456',
+      snmpUsername: 'bootstrapUser',
+      organizationId: orgA.id,
+    },
+  });
+
+  const dev5 = await prisma.device.create({
+    data: {
+      name: 'Drone Gamma',
+      ipAddress: 'mock-device-5',
       port: 161,
       authProtocol: AuthProtocol.SHA,
       authPasswordHash: 'authPassword123',
@@ -135,10 +163,38 @@ async function main() {
     },
   });
 
-  const dev4 = await prisma.device.create({
+  const dev6 = await prisma.device.create({
     data: {
-      name: 'Sensor Hub X1',
-      ipAddress: 'mock-device-1',
+      name: 'Sensor Press-2',
+      ipAddress: 'mock-device-6',
+      port: 161,
+      authProtocol: AuthProtocol.SHA,
+      authPasswordHash: 'authPassword123',
+      privacyProtocol: PrivacyProtocol.AES,
+      privacyPasswordHash: 'privPassword456',
+      snmpUsername: 'bootstrapUser',
+      organizationId: orgB.id,
+    },
+  });
+
+  const dev7 = await prisma.device.create({
+    data: {
+      name: 'Gateway Lunar',
+      ipAddress: 'mock-device-7',
+      port: 161,
+      authProtocol: AuthProtocol.SHA,
+      authPasswordHash: 'authPassword123',
+      privacyProtocol: PrivacyProtocol.AES,
+      privacyPasswordHash: 'privPassword456',
+      snmpUsername: 'bootstrapUser',
+      organizationId: orgB.id,
+    },
+  });
+
+  const dev8 = await prisma.device.create({
+    data: {
+      name: 'Drone Delta',
+      ipAddress: 'mock-device-8',
       port: 161,
       authProtocol: AuthProtocol.SHA,
       authPasswordHash: 'authPassword123',
@@ -149,26 +205,45 @@ async function main() {
     },
   });
 
-  const dev5 = await prisma.device.create({
+  const dev9 = await prisma.device.create({
     data: {
-      name: 'Drone Delta',
-      ipAddress: 'mock-device-2',
+      name: 'Sensor Humid-3',
+      ipAddress: 'mock-device-9',
       port: 161,
       authProtocol: AuthProtocol.SHA,
       authPasswordHash: 'authPassword123',
       privacyProtocol: PrivacyProtocol.AES,
       privacyPasswordHash: 'privPassword456',
       snmpUsername: 'bootstrapUser',
-      organizationId: orgB.id,
+      organizationId: orgC.id,
+    },
+  });
+
+  const dev10 = await prisma.device.create({
+    data: {
+      name: 'Security Cam-1',
+      ipAddress: 'mock-device-10',
+      port: 161,
+      authProtocol: AuthProtocol.SHA,
+      authPasswordHash: 'authPassword123',
+      privacyProtocol: PrivacyProtocol.AES,
+      privacyPasswordHash: 'privPassword456',
+      snmpUsername: 'bootstrapUser',
+      organizationId: orgC.id,
     },
   });
 
   console.log(`Created devices:
     - ${dev1.name} (IP: ${dev1.ipAddress}, Org: ${orgA.name})
     - ${dev2.name} (IP: ${dev2.ipAddress}, Org: ${orgA.name})
-    - ${dev3.name} (IP: ${dev3.ipAddress}, Org: ${orgB.name})
-    - ${dev4.name} (IP: ${dev4.ipAddress}, Org: ${orgC.name})
-    - ${dev5.name} (IP: ${dev5.ipAddress}, Org: ${orgB.name})`);
+    - ${dev3.name} (IP: ${dev3.ipAddress}, Org: ${orgA.name})
+    - ${dev4.name} (IP: ${dev4.ipAddress}, Org: ${orgA.name})
+    - ${dev5.name} (IP: ${dev5.ipAddress}, Org: ${orgB.name})
+    - ${dev6.name} (IP: ${dev6.ipAddress}, Org: ${orgB.name})
+    - ${dev7.name} (IP: ${dev7.ipAddress}, Org: ${orgB.name})
+    - ${dev8.name} (IP: ${dev8.ipAddress}, Org: ${orgC.name})
+    - ${dev9.name} (IP: ${dev9.ipAddress}, Org: ${orgC.name})
+    - ${dev10.name} (IP: ${dev10.ipAddress}, Org: ${orgC.name})`);
 
   console.log('Seeding completed successfully!');
 }

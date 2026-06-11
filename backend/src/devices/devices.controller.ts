@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, ForbiddenException } from '@nestjs/common';
 import { DevicesService } from './devices.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
 import { AuthGuard, AuthenticatedUser } from '../auth/auth.guard';
@@ -57,6 +57,24 @@ export class DevicesController {
       throw new ForbiddenException('You do not have access to this device');
     }
     return this.devicesService.getDeviceMetrics(id);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Update a device' })
+  @ApiResponse({ status: 200, description: 'Device successfully updated.' })
+  @ApiResponse({ status: 403, description: 'Forbidden: Access denied.' })
+  @ApiResponse({ status: 404, description: 'Device not found.' })
+  async update(
+    @Param('id') id: string,
+    @Body() updateDeviceDto: CreateDeviceDto,
+    @CurrentUser() user: AuthenticatedUser
+  ) {
+    const device = await this.devicesService.findOne(id);
+    if (user.role !== Role.ADMIN && device.organizationId !== user.organizationId) {
+      throw new ForbiddenException('You do not have access to this device');
+    }
+    const isAdmin = user.role === Role.ADMIN;
+    return this.devicesService.update(id, updateDeviceDto, user.organizationId, isAdmin);
   }
 
   @Delete(':id')

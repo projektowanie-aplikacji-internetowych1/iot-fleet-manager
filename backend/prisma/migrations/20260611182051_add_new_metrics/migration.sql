@@ -1,0 +1,2 @@
+ALTER TABLE "device_metrics" ADD COLUMN     "memoryUsage" INTEGER NOT NULL DEFAULT 30,
+ADD COLUMN     "signalStrength" INTEGER NOT NULL DEFAULT -50;
