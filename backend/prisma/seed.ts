@@ -138,7 +138,7 @@ async function main() {
   const dev4 = await prisma.device.create({
     data: {
       name: 'Sensor Hub X1',
-      ipAddress: 'mock-device-1',
+      ipAddress: 'mock-device-4',
       port: 161,
       authProtocol: AuthProtocol.SHA,
       authPasswordHash: 'authPassword123',
@@ -152,7 +152,7 @@ async function main() {
   const dev5 = await prisma.device.create({
     data: {
       name: 'Drone Delta',
-      ipAddress: 'mock-device-2',
+      ipAddress: 'mock-device-5',
       port: 161,
       authProtocol: AuthProtocol.SHA,
       authPasswordHash: 'authPassword123',

@@ -102,5 +102,33 @@ services:
     ports:
       - "163:161/udp"
 
+  mock-device-4:
+    build:
+      context: ./docker/snmp-mock
+      dockerfile: Dockerfile
+    container_name: mock-device-4
+    restart: always
+    environment:
+      BATTERY_SEED: 85
+      TEMP_SEED: 22
+      DEVICE_STATUS: 1
+      CONTAINER_NAME: "mock-device-4"
+    ports:
+      - "164:161/udp"
+
+  mock-device-5:
+    build:
+      context: ./docker/snmp-mock
+      dockerfile: Dockerfile
+    container_name: mock-device-5
+    restart: always
+    environment:
+      BATTERY_SEED: 19
+      TEMP_SEED: 45
+      DEVICE_STATUS: 2
+      CONTAINER_NAME: "mock-device-5"
+    ports:
+      - "165:161/udp"
+
 volumes:
   postgres_data:

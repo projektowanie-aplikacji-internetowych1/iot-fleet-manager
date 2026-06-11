@@ -74,8 +74,8 @@ Po starcie bazy danych, seeder automatycznie tworzy testową strukturę **3 orga
 | **Drone Alpha** | `mock-device-1` | 161 | SHA | AES | SpaceX Fleet |
 | **Drone Beta** | `mock-device-2` | 161 | SHA | AES | SpaceX Fleet |
 | **Drone Gamma** | `mock-device-3` | 161 | SHA | AES | Blue Origin Fleet |
-| **Drone Delta** | `mock-device-2` | 161 | SHA | AES | Blue Origin Fleet |
-| **Sensor Hub X1** | `mock-device-1` | 161 | SHA | AES | DJI Enterprise |
+| **Drone Delta** | `mock-device-5` | 161 | SHA | AES | Blue Origin Fleet |
+| **Sensor Hub X1** | `mock-device-4` | 161 | SHA | AES | DJI Enterprise |
 
 ---
 

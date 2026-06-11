@@ -288,7 +288,7 @@ export const Dashboard: React.FC = () => {
         <div className="glass-panel p-6 rounded-2xl border-l-4 border-l-rose-500">
           <div className="flex items-center gap-2 text-rose-400 font-bold mb-4 text-sm">
             <AlertCircle size={18} />
-            <span>Urządzenia wymagające natychmiastowej obsługi (Niski stan baterii &lt; 30%)</span>
+            <span>Urządzenia wymagające natychmiastowej obsługi</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {batteryData.devices
