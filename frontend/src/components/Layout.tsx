@@ -82,7 +82,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                         <span>Administrator</span>
                       </>
                     ) : (
-                      <span>Użytkownik</span>
+                      <>
+                        <User size={10} className="text-brand-indigo/80" />
+                        <span>Użytkownik</span>
+                      </>
                     )}
                   </p>
                 </div>
