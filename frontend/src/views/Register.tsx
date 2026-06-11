@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { Cpu, Mail, Lock, Building, Shield, AlertTriangle } from 'lucide-react';
 
+import { translateError } from '../utils/errors';
+
 export const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,7 +28,7 @@ export const Register: React.FC = () => {
       });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Błąd podczas rejestracji');
+      setError(translateError(err.message));
     } finally {
       setLoading(false);
     }

@@ -15,6 +15,8 @@ export interface AuthResponse {
   user: User;
 }
 
+import { translateError } from '../utils/errors';
+
 async function apiFetch(path: string, options: RequestInit = {}) {
   const token = localStorage.getItem('auth_token');
   const headers = new Headers(options.headers || {});
@@ -24,21 +26,29 @@ async function apiFetch(path: string, options: RequestInit = {}) {
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch (err: any) {
+    throw new Error(translateError(err.message || 'Failed to fetch'));
+  }
 
   if (response.status === 401) {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_info');
-    window.location.href = '/login';
-    throw new Error('Unauthorized');
+    if (!path.startsWith('/auth/')) {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_info');
+      window.location.href = '/login';
+      throw new Error('Unauthorized');
+    }
   }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `API error: ${response.status}`);
+    const rawMessage = errorData.message || `API error: ${response.status}`;
+    throw new Error(translateError(rawMessage));
   }
 
   return response.json();
