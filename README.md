@@ -2,7 +2,7 @@
 
 System klasy **IoT Fleet Manager** umożliwiający monitorowanie urządzeń IoT za pośrednictwem protokołu **SNMPv3** z uwierzytelnianiem SHA i szyfrowaniem AES.
 
-Projekt został zaprojektowany z architekturą izolacji najemcóm, w której użytkownicy są przypisywani do konkretnych organizacji, a administratorzy mają globalny wgląd w całą flotę.
+Projekt został zaprojektowany z architekturą izolacji najemców, w której użytkownicy są przypisywani do konkretnych organizacji, a administratorzy mają globalny wgląd w całą flotę.
 
 ---
 
@@ -19,7 +19,7 @@ System składa się z pięciu głównych komponentów uruchamianych w odrębnych
 4. **Kolejka Zadań & Cache (BullMQ + Redis):**
    Uruchamia asynchroniczny worker w tle, który co **30 sekund** pobiera dane ze wszystkich zarejestrowanych urządzeń IoT za pomocą protokołu SNMPv3 i zapisuje wyniki w bazie danych.
 5. **Symulator Urządzeń SNMP (Docker Net-SNMP):**
-   3 oddzielne kontenery symulujące drony (Alpha, Beta, Gamma) ze spersonalizowanymi parametrami początkowymi i cyklicznymi zmianami telemetrii.
+   Oddzielne kontenery symulujące drony ze spersonalizowanymi parametrami początkowymi i cyklicznymi zmianami telemetrii.
 
 ---
 
@@ -28,53 +28,169 @@ System składa się z pięciu głównych komponentów uruchamianych w odrębnych
 Wszystkie serwisy systemu mogą zostać uruchomione jedną komendą:
 
 1. Upewnij się, że masz zainstalowany program **Docker** oraz **Docker Compose**.
-2. W głównym katalogu projektu uruchom:
+2. W głównym katalogu projektu (`iot-fleet-manager/`) uruchom:
    ```bash
    docker compose up --build
    ```
 3. Docker pobierze obrazy bazowe, skompiluje frontend i backend, uruchomi bazę danych wraz z automatycznymi migracjami Prisma oraz zasili bazę danymi demonstracyjnymi.
 
+> **Uwaga:** Komendę należy uruchamiać z katalogu głównego projektu, w którym znajduje się plik `docker-compose.yml`.
+
 ### Dostępne Adresy URL:
 - **Panel Frontend:** [http://localhost:5173](http://localhost:5173)
 - **Dokumentacja API Swagger:** [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
 - **Serwer API Backend:** [http://localhost:3000](http://localhost:3000)
+- **Health Check:** [http://localhost:3000/health](http://localhost:3000/health)
 
 ---
 
 ## Konta Demonstracyjne
 
-Po starcie bazy danych, seeder tworzy testową strukturę organizacji, użytkowników i urządzeń:
+Po starcie bazy danych, seeder automatycznie tworzy testową strukturę **3 organizacji**, **6 użytkowników** oraz **5 urządzeń IoT**:
+
+### Organizacje
+
+| Nazwa organizacji | Liczba użytkowników | Liczba urządzeń |
+| :--- | :---: | :---: |
+| **SpaceX Fleet** | 3 (1 Admin + 2 User) | 2 (Drone Alpha, Drone Beta) |
+| **Blue Origin Fleet** | 2 (1 Admin + 1 User) | 2 (Drone Gamma, Drone Delta) |
+| **DJI Enterprise** | 1 (1 User) | 1 (Sensor Hub X1) |
+
+### Użytkownicy
 
 | Adres E-mail | Hasło | Rola | Organizacja (Tenant) | Widoczne urządzenia |
 | :--- | :--- | :--- | :--- | :--- |
 | **admin@iot.com** | `admin123` | **ADMIN** | SpaceX Fleet | Wszystkie urządzenia w systemie |
-| **userA@iot.com** | `user123` | **USER** | SpaceX Fleet | Drone Alpha, Drone Beta |
-| **userB@iot.com** | `user123` | **USER** | Blue Origin Fleet | Drone Gamma |
+| **adminb@iot.com** | `admin123` | **ADMIN** | Blue Origin Fleet | Wszystkie urządzenia w systemie |
+| **usera@iot.com** | `user123` | **USER** | SpaceX Fleet | Drone Alpha, Drone Beta |
+| **userd@iot.com** | `user123` | **USER** | SpaceX Fleet | Drone Alpha, Drone Beta |
+| **userb@iot.com** | `user123` | **USER** | Blue Origin Fleet | Drone Gamma, Drone Delta |
+| **userc@iot.com** | `user123` | **USER** | DJI Enterprise | Sensor Hub X1 |
+
+### Urządzenia IoT
+
+| Nazwa urządzenia | Adres IP (host Docker) | Port | Protokół Auth | Protokół Priv | Organizacja |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| **Drone Alpha** | `mock-device-1` | 161 | SHA | AES | SpaceX Fleet |
+| **Drone Beta** | `mock-device-2` | 161 | SHA | AES | SpaceX Fleet |
+| **Drone Gamma** | `mock-device-3` | 161 | SHA | AES | Blue Origin Fleet |
+| **Drone Delta** | `mock-device-2` | 161 | SHA | AES | Blue Origin Fleet |
+| **Sensor Hub X1** | `mock-device-1` | 161 | SHA | AES | DJI Enterprise |
 
 ---
 
 ## Instrukcja Testowania Manualnego
 
-Aby przetestować funkcjonalność systemu krok po kroku:
+Poniższa instrukcja prowadzi krok po kroku przez wszystkie kluczowe funkcjonalności systemu. Każdy krok weryfikuje inny aspekt aplikacji.
 
-### Krok 1: Logowanie jako Użytkownik A
+### Test 1: Logowanie i autoryzacja
+
 1. Otwórz w przeglądarce [http://localhost:5173](http://localhost:5173).
-2. Zaloguj się danymi: **userA@iot.com** / `user123`.
-3. Zostaniesz przekierowany na **Panel Główny**. Zobaczysz wskaźniki podsumowujące urządzenia w Twojej organizacji (np. 2 urządzenia online, średni stan baterii floty).
-4. Zwróć uwagę, że dane automatycznie odświeżają się w tle.
+2. Zostaniesz przekierowany na stronę logowania.
+3. Zaloguj się danymi: **usera@iot.com** / `user123`.
+4. **Oczekiwany wynik:** Zostaniesz przekierowany na **Panel Główny**. W lewym dolnym rogu paska bocznego widoczny jest zalogowany e-mail oraz rola użytkownika.
 
-### Krok 2: Sprawdzenie Izolacji Danych
+### Test 2: Dashboard
+
+1. Na Panelu Głównym sprawdź, czy wyświetlają się karty podsumowujące:
+   - **Urządzenia Online** — powinno wskazywać liczbę urządzeń ze statusem SPRAWNY w Twojej organizacji.
+   - **Średnia Bateria** — procentowy wskaźnik średniego naładowania baterii floty.
+2. Sprawdź, czy wykresy statusów i wykres baterii poprawnie się renderują.
+3. **Oczekiwany wynik:** Dane powinny automatycznie odświeżać się co kilka sekund bez przeładowania strony.
+
+### Test 3: Izolacja danych
+
 1. Przejdź do zakładki **Urządzenia Fleet** w menu bocznym.
-2. Na liście zobaczysz wyłącznie urządzenia `Drone Alpha` oraz `Drone Beta` należące do Twojej organizacji. Urządzenie `Drone Gamma` z Blue Origin Fleet jest dla Ciebie niewidoczne.
-3. Kliknij przycisk ikony oka przy `Drone Alpha` aby wejść w **Szczegóły Urządzenia**. Zobaczysz tam konfigurację SNMPv3 oraz wykresy parametrów.
+2. **Oczekiwany wynik:** Na liście widoczne są wyłącznie urządzenia Twojej organizacji: `Drone Alpha` i `Drone Beta`. Urządzenia `Drone Gamma`, `Drone Delta` i `Sensor Hub X1` z innych organizacji są **niewidoczne**.
+3. Wyloguj się i zaloguj jako **userb@iot.com** / `user123`.
+4. Przejdź do **Urządzenia Fleet**.
+5. **Oczekiwany wynik:** Widzisz tylko `Drone Gamma` i `Drone Delta`.
+6. Wyloguj się i zaloguj jako **userc@iot.com** / `user123`.
+7. Przejdź do **Urządzenia Fleet**.
+8. **Oczekiwany wynik:** Widzisz wyłącznie `Sensor Hub X1`.
 
-### Krok 3: Logowanie jako Administrator i dodanie nowego urządzenia
-1. Kliknij **Wyloguj się** w dolnej części panelu bocznego.
-2. Zaloguj się danymi administratora: **admin@iot.com** / `admin123`.
-3. Przejdź do zakładki **Urządzenia Fleet**. Jako administrator widzisz teraz urządzenia ze **wszystkich** organizacji (`Drone Alpha`, `Drone Beta` oraz `Drone Gamma`).
-4. Kliknij przycisk **Dodaj urządzenie**:
-   - Wpisz nazwę (np. `Drone Delta`).
-   - Podaj host/IP oraz port (np. dla symulowanego urządzenia 3 podaj `mock-device-3` i port `161`).
-   - W polu wyboru organizacji wybierz organizację (funkcja dostępna wyłącznie dla roli ADMIN).
-   - Wprowadź poświadczenia SNMPv3 (możesz pozostawić domyślne).
-   - Kliknij **Zapisz**. Nowe urządzenie pojawi się na liście i system automatycznie rozpocznie jego odpytywanie w tle.
+### Test 4: Widok administratora
+
+1. Wyloguj się i zaloguj jako **admin@iot.com** / `admin123`.
+2. Przejdź do **Urządzenia Fleet**.
+3. **Oczekiwany wynik:** Lista zawiera **wszystkie 5 urządzeń** ze wszystkich organizacji: Drone Alpha, Drone Beta, Drone Gamma, Drone Delta, Sensor Hub X1.
+4. Na Panelu Głównym wykresy powinny agregować dane ze **wszystkich** organizacji.
+
+### Test 5: Szczegóły urządzenia i wykresy telemetryczne
+
+1. Jako administrator, na liście urządzeń kliknij ikonę oka (👁) przy urządzeniu `Drone Alpha`.
+2. **Oczekiwany wynik:** Otwiera się widok szczegółów urządzenia zawierający:
+   - Kartę informacyjną z nazwą, adresem IP, portem, organizacją.
+   - Konfigurację SNMPv3 (protokół Auth: SHA, protokół Privacy: AES, użytkownik: bootstrapUser).
+   - Wykresy historyczne: **Bateria (%)**, **Temperatura (°C)**, **Czas pracy (uptime)**.
+3. Sprawdź, czy wykresy posiadają punkty danych i linie trendu.
+
+### Test 6: Wyszukiwarka i filtry na liście urządzeń
+
+1. Jako admin na stronie **Urządzenia Fleet**, wpisz w pole wyszukiwania tekst `Gamma`.
+2. **Oczekiwany wynik:** Lista filtruje się i pokazuje tylko `Drone Gamma`.
+3. Wyczyść pole wyszukiwania, a następnie zmień filtr statusu na jeden z dostępnych (np. `Sprawny`).
+4. **Oczekiwany wynik:** Lista pokazuje tylko urządzenia z wybranym statusem.
+
+### Test 7: Dodawanie nowego urządzenia
+
+1. Jako administrator, przejdź do **Urządzenia Fleet** i kliknij przycisk **+ Dodaj urządzenie**.
+2. Wypełnij formularz:
+   - Nazwa: `Drone Epsilon`
+   - Adres IP: `mock-device-3`
+   - Port: `161`
+   - Protokół Auth: `SHA`
+   - Hasło Auth: `authPassword123`
+   - Protokół Privacy: `AES`
+   - Hasło Privacy: `privPassword456`
+   - Użytkownik SNMP: `bootstrapUser`
+   - Organizacja: wybierz `DJI Enterprise`
+3. Kliknij **Zapisz**.
+4. **Oczekiwany wynik:** Nowe urządzenie pojawia się na liście i po ok. 30 sekundach system automatycznie pobierze z niego dane telemetryczne, status zmieni się na SPRAWNY.
+
+### Test 8: Usuwanie urządzenia
+
+1. Jako administrator, znajdź na liście nowo dodane urządzenie `Drone Epsilon`.
+2. Kliknij przycisk usuwania przy tym urządzeniu.
+3. **Oczekiwany wynik:** Urządzenie znika z listy. Przy ponownym zalogowaniu jako `userc@iot.com` urządzenie `Drone Epsilon` nie powinno być widoczne.
+
+### Test 9: Walidacja formularzy
+
+1. Jako administrator, kliknij **+ Dodaj urządzenie**.
+2. Spróbuj wysłać formularz **bez podania nazwy** urządzenia.
+3. **Oczekiwany wynik:** Formularz nie pozwala na wysłanie lub wyświetla komunikat o błędzie walidacji.
+4. Wpisz w pole portu wartość `99999` (poza zakresem 1–65535).
+5. **Oczekiwany wynik:** Backend zwraca błąd walidacji (HTTP 400).
+
+### Test 10: Rejestracja nowego konta
+
+1. Wyloguj się z aplikacji.
+2. Na stronie logowania kliknij link do rejestracji lub przejdź do `/register`.
+3. Wypełnij formularz: e-mail `nowy@iot.com`, hasło `haslo123`, nazwa organizacji `Nowa Firma`.
+4. **Oczekiwany wynik:** Konto zostaje utworzone, nowa organizacja `Nowa Firma` jest automatycznie tworzona, a użytkownik zostaje zalogowany.
+
+### Test 11: Weryfikacja Swagger API
+
+1. Otwórz w przeglądarce [http://localhost:3000/api/docs](http://localhost:3000/api/docs).
+2. **Oczekiwany wynik:** Wyświetla się interaktywna dokumentacja Swagger z listą wszystkich endpointów pogrupowanych według modułów (Health Check, Auth, Organizations, Devices, Analytics).
+3. Kliknij na endpoint `POST /auth/login`, a następnie przycisk **Try it out**.
+4. Wpisz body: `{ "email": "admin@iot.com", "password": "admin123" }` i kliknij **Execute**.
+5. **Oczekiwany wynik:** Odpowiedź HTTP 201 z obiektem zawierającym pole `accessToken`.
+
+### Test 12: Health Check
+
+1. Otwórz w przeglądarce [http://localhost:3000/health](http://localhost:3000/health).
+2. **Oczekiwany wynik:** Odpowiedź JSON: `{ "status": "UP", "timestamp": "...", "uptime": ... }`.
+
+### Test 13: Porównanie dwóch użytkowników w tej samej organizacji
+
+1. Zaloguj się jako **usera@iot.com** / `user123`.
+2. Zanotuj widoczne urządzenia i dane na dashboardzie.
+3. Wyloguj się i zaloguj jako **userd@iot.com** / `user123`.
+4. **Oczekiwany wynik:** Obaj użytkownicy widzą **identyczne** dane: te same urządzenia oraz identyczne wykresy analityczne, ponieważ należą do tej samej organizacji.
+
+### Test 14: Próba nieautoryzowanego dostępu
+
+1. Wyloguj się z aplikacji.
+2. Spróbuj wejść bezpośrednio na adres [http://localhost:5173/dashboard](http://localhost:5173/dashboard).
+3. **Oczekiwany wynik:** Aplikacja automatycznie przekierowuje na stronę logowania, ponieważ brak tokenu JWT.
