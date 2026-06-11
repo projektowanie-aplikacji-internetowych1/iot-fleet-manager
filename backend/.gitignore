@@ -1,5 +1,11 @@
-node_modules
+# Dependency
+node_modules/
 
+# Output directories
+/dist
+
+# Env
 .env
 
+# Prisma generated files
 /generated/prisma

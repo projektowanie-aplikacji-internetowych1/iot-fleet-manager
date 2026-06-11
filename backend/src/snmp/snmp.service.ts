@@ -9,10 +9,10 @@ export class SnmpService {
   async pollDevice(device: Device): Promise<{ battery: number; uptime: number; status: string; temperature: number }> {
     return new Promise((resolve, reject) => {
       const oids = [
-        '.1.3.6.1.4.1.9999.1.1',
-        '.1.3.6.1.4.1.9999.1.2',
-        '.1.3.6.1.4.1.9999.1.3',
-        '.1.3.6.1.4.1.9999.1.4',
+        '1.3.6.1.4.1.9999.1.1',
+        '1.3.6.1.4.1.9999.1.2',
+        '1.3.6.1.4.1.9999.1.3',
+        '1.3.6.1.4.1.9999.1.4',
       ];
 
       let securityLevel = snmp.SecurityLevel.noAuthNoPriv;
@@ -66,10 +66,12 @@ export class SnmpService {
             metricsMap[varbind.oid] = varbind.value;
           }
 
-          const rawBattery = metricsMap['.1.3.6.1.4.1.9999.1.1'];
-          const rawUptime = metricsMap['.1.3.6.1.4.1.9999.1.2'];
-          const rawStatus = metricsMap['.1.3.6.1.4.1.9999.1.3'];
-          const rawTemp = metricsMap['.1.3.6.1.4.1.9999.1.4'];
+          const getMetric = (oid: string) => metricsMap[oid] !== undefined ? metricsMap[oid] : metricsMap['.' + oid];
+
+          const rawBattery = getMetric('1.3.6.1.4.1.9999.1.1');
+          const rawUptime = getMetric('1.3.6.1.4.1.9999.1.2');
+          const rawStatus = getMetric('1.3.6.1.4.1.9999.1.3');
+          const rawTemp = getMetric('1.3.6.1.4.1.9999.1.4');
 
           const battery = typeof rawBattery === 'number' ? rawBattery : parseInt(rawBattery?.toString() || '0', 10);
           const uptime = typeof rawUptime === 'number' ? rawUptime : parseInt(rawUptime?.toString() || '0', 10);

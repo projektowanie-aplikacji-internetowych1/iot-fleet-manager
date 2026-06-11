@@ -1,3 +1,4 @@
+#!/bin/bash
 START_TIME=$(cat /tmp/container_start_time 2>/dev/null || date +%s)
 NOW=$(date +%s)
 
