@@ -21,7 +21,11 @@ async function main() {
     data: { name: 'Blue Origin Fleet' },
   });
 
-  console.log(`Created organizations: ${orgA.name} and ${orgB.name}`);
+  const orgC = await prisma.organization.create({
+    data: { name: 'DJI Enterprise' },
+  });
+
+  console.log(`Created organizations: ${orgA.name}, ${orgB.name}, ${orgC.name}`);
 
   const adminPasswordHash = await bcrypt.hash('admin123', 10);
   const userPasswordHash = await bcrypt.hash('user123', 10);
@@ -53,10 +57,41 @@ async function main() {
     },
   });
 
+  const userC = await prisma.user.create({
+    data: {
+      email: 'userc@iot.com',
+      password: userPasswordHash,
+      role: Role.USER,
+      organizationId: orgC.id,
+    },
+  });
+
+  const userD = await prisma.user.create({
+    data: {
+      email: 'userd@iot.com',
+      password: userPasswordHash,
+      role: Role.USER,
+      organizationId: orgA.id,
+    },
+  });
+
+  const adminB = await prisma.user.create({
+    data: {
+      email: 'adminb@iot.com',
+      password: adminPasswordHash,
+      role: Role.ADMIN,
+      organizationId: orgB.id,
+    },
+  });
+
   console.log(`Created users:
-    - Admin: admin@iot.com (Pass: admin123, Org: SpaceX Fleet)
-    - User A: usera@iot.com (Pass: user123, Org: SpaceX Fleet)
-    - User B: userb@iot.com (Pass: user123, Org: Blue Origin Fleet)`);
+    - Admin:   admin@iot.com  (Pass: admin123, Role: ADMIN, Org: ${orgA.name})
+    - Admin B: adminb@iot.com (Pass: admin123, Role: ADMIN, Org: ${orgB.name})
+    - User A:  usera@iot.com  (Pass: user123,  Role: USER,  Org: ${orgA.name})
+    - User B:  userb@iot.com  (Pass: user123,  Role: USER,  Org: ${orgB.name})
+    - User C:  userc@iot.com  (Pass: user123,  Role: USER,  Org: ${orgC.name})
+    - User D:  userd@iot.com  (Pass: user123,  Role: USER,  Org: ${orgA.name})`);
+
 
   const dev1 = await prisma.device.create({
     data: {
@@ -100,10 +135,40 @@ async function main() {
     },
   });
 
+  const dev4 = await prisma.device.create({
+    data: {
+      name: 'Sensor Hub X1',
+      ipAddress: 'mock-device-1',
+      port: 161,
+      authProtocol: AuthProtocol.SHA,
+      authPasswordHash: 'authPassword123',
+      privacyProtocol: PrivacyProtocol.AES,
+      privacyPasswordHash: 'privPassword456',
+      snmpUsername: 'bootstrapUser',
+      organizationId: orgC.id,
+    },
+  });
+
+  const dev5 = await prisma.device.create({
+    data: {
+      name: 'Drone Delta',
+      ipAddress: 'mock-device-2',
+      port: 161,
+      authProtocol: AuthProtocol.SHA,
+      authPasswordHash: 'authPassword123',
+      privacyProtocol: PrivacyProtocol.AES,
+      privacyPasswordHash: 'privPassword456',
+      snmpUsername: 'bootstrapUser',
+      organizationId: orgB.id,
+    },
+  });
+
   console.log(`Created devices:
-    - ${dev1.name} (IP: ${dev1.ipAddress}, Org: SpaceX Fleet)
-    - ${dev2.name} (IP: ${dev2.ipAddress}, Org: SpaceX Fleet)
-    - ${dev3.name} (IP: ${dev3.ipAddress}, Org: Blue Origin Fleet)`);
+    - ${dev1.name} (IP: ${dev1.ipAddress}, Org: ${orgA.name})
+    - ${dev2.name} (IP: ${dev2.ipAddress}, Org: ${orgA.name})
+    - ${dev3.name} (IP: ${dev3.ipAddress}, Org: ${orgB.name})
+    - ${dev4.name} (IP: ${dev4.ipAddress}, Org: ${orgC.name})
+    - ${dev5.name} (IP: ${dev5.ipAddress}, Org: ${orgB.name})`);
 
   console.log('Seeding completed successfully!');
 }
