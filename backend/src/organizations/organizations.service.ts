@@ -40,4 +40,17 @@ export class OrganizationsService {
 
     return org;
   }
+
+  async remove(id: string) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id },
+    });
+    if (!org) {
+      throw new NotFoundException(`Organization with ID ${id} not found`);
+    }
+
+    return this.prisma.organization.delete({
+      where: { id },
+    });
+  }
 }

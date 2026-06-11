@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, UseGuards, ForbiddenException } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { AuthGuard, AuthenticatedUser } from '../auth/auth.guard';
@@ -46,5 +46,15 @@ export class OrganizationsController {
       throw new ForbiddenException('You do not have access to this organization');
     }
     return this.orgService.findOne(id);
+  }
+
+  @Delete(':id')
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'Delete organization and cascade delete users/devices (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Organization successfully deleted.' })
+  @ApiResponse({ status: 403, description: 'Forbidden: Admin access required.' })
+  @ApiResponse({ status: 404, description: 'Organization not found.' })
+  async remove(@Param('id') id: string) {
+    return this.orgService.remove(id);
   }
 }

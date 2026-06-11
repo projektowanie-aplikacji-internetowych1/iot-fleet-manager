@@ -7,6 +7,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { DevicesModule } from './devices/devices.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { TasksModule } from './tasks/tasks.module';
+import { UsersModule } from './users/users.module';
 import { BullModule } from '@nestjs/bullmq';
 
 @Module({
@@ -23,6 +24,7 @@ import { BullModule } from '@nestjs/bullmq';
     DevicesModule,
     AnalyticsModule,
     TasksModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

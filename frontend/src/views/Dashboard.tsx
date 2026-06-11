@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Cpu, AlertCircle, BatteryCharging, AlertTriangle, ShieldCheck, Activity, RefreshCw } from 'lucide-react';
+import { Cpu, AlertCircle, BatteryCharging, AlertTriangle, ShieldCheck, Activity, RefreshCw, Wifi, HardDrive } from 'lucide-react';
 
 interface BatteryData {
   averageBattery: number;
@@ -23,6 +23,7 @@ interface StatusData {
 export const Dashboard: React.FC = () => {
   const [batteryData, setBatteryData] = useState<BatteryData | null>(null);
   const [statusData, setStatusData] = useState<StatusData | null>(null);
+  const [devicesList, setDevicesList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,12 +34,14 @@ export const Dashboard: React.FC = () => {
     setError(null);
 
     try {
-      const [battery, status] = await Promise.all([
+      const [battery, status, devices] = await Promise.all([
         api.getBatteryAnalytics(),
         api.getStatusAnalytics(),
+        api.getDevices(),
       ]);
       setBatteryData(battery);
       setStatusData(status);
+      setDevicesList(devices);
     } catch (err: any) {
       setError(err.message || 'Błąd podczas ładowania analityki');
     } finally {
@@ -91,6 +94,19 @@ export const Dashboard: React.FC = () => {
   const activeAlarms = statusData ? statusData.WARNING + statusData.ERROR : 0;
   const avgBattery = batteryData ? Math.round(batteryData.averageBattery) : 0;
 
+  const onlineDevices = devicesList.filter(d => {
+    const m = d.metrics?.[0];
+    return m && m.status !== 'OFFLINE';
+  });
+
+  const avgMemory = onlineDevices.length > 0
+    ? Math.round(onlineDevices.reduce((acc, d) => acc + (d.metrics?.[0]?.memoryUsage ?? 0), 0) / onlineDevices.length)
+    : 0;
+
+  const avgSignal = onlineDevices.length > 0
+    ? Math.round(onlineDevices.reduce((acc, d) => acc + (d.metrics?.[0]?.signalStrength ?? -100), 0) / onlineDevices.length)
+    : -100;
+
   const pieData = statusData
     ? [
       { name: 'Sprawne (Online)', value: statusData.ONLINE, color: '#10b981' },
@@ -124,82 +140,126 @@ export const Dashboard: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="glass-panel glass-panel-hover p-6 rounded-2xl relative overflow-hidden group">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5">
+        <div className="glass-panel glass-panel-hover p-4 rounded-2xl relative overflow-hidden group flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Urządzenia Online</p>
-              <h4 className="text-3xl font-extrabold text-white mt-2">
-                {onlineCount} <span className="text-slate-600 text-sm font-medium">/ {totalDevices}</span>
+              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Urządzenia Online</p>
+              <h4 className="text-2xl font-extrabold text-white mt-1.5">
+                {onlineCount} <span className="text-slate-600 text-xs font-medium">/ {totalDevices}</span>
               </h4>
             </div>
-            <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 text-emerald-500 group-hover:scale-110 transition-transform">
-              <ShieldCheck size={20} />
+            <div className="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 text-emerald-500 group-hover:scale-110 transition-transform">
+              <ShieldCheck size={16} />
             </div>
           </div>
-          <div className="mt-4 flex items-center gap-1.5 text-xs text-slate-400">
+          <div className="mt-3 flex items-center gap-1 text-[10px] text-slate-400">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-            <span>Urządzenia aktywnie raportujące</span>
+            <span>Aktywne w sieci</span>
           </div>
         </div>
 
-        <div className="glass-panel glass-panel-hover p-6 rounded-2xl relative overflow-hidden group">
+        <div className="glass-panel glass-panel-hover p-4 rounded-2xl relative overflow-hidden group flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Urządzenia Offline</p>
-              <h4 className="text-3xl font-extrabold text-white mt-2">
-                {offlineCount} <span className="text-slate-600 text-sm font-medium">/ {totalDevices}</span>
+              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Urządzenia Offline</p>
+              <h4 className="text-2xl font-extrabold text-white mt-1.5">
+                {offlineCount} <span className="text-slate-600 text-xs font-medium">/ {totalDevices}</span>
               </h4>
             </div>
-            <div className="bg-slate-800 p-3 rounded-xl border border-slate-700 text-slate-400 group-hover:scale-110 transition-transform">
-              <Cpu size={20} />
+            <div className="bg-slate-800 p-2.5 rounded-xl border border-slate-700 text-slate-400 group-hover:scale-110 transition-transform">
+              <Cpu size={16} />
             </div>
           </div>
-          <div className="mt-4 text-xs text-slate-400">
-            <span>Brak odpowiedzi SNMP w limicie timeout</span>
+          <div className="mt-3 text-[10px] text-slate-500">
+            <span>Brak odpowiedzi SNMP</span>
           </div>
         </div>
 
-        <div className="glass-panel glass-panel-hover p-6 rounded-2xl relative overflow-hidden group">
+        <div className="glass-panel glass-panel-hover p-4 rounded-2xl relative overflow-hidden group flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Średnia Bateria</p>
-              <h4 className="text-3xl font-extrabold text-white mt-2">
+              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Średnia Bateria</p>
+              <h4 className="text-2xl font-extrabold text-white mt-1.5">
                 {avgBattery}%
               </h4>
             </div>
-            <div className="bg-brand-cyan/10 p-3 rounded-xl border border-brand-cyan/20 text-brand-cyan group-hover:scale-110 transition-transform">
-              <BatteryCharging size={20} />
+            <div className="bg-brand-cyan/10 p-2.5 rounded-xl border border-brand-cyan/20 text-brand-cyan group-hover:scale-110 transition-transform">
+              <BatteryCharging size={16} />
             </div>
           </div>
-          <div className="mt-4">
-            <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+          <div className="mt-3">
+            <div className="w-full bg-slate-900 rounded-full h-1 overflow-hidden">
               <div
-                className="bg-brand-cyan h-1.5 rounded-full transition-all duration-500"
+                className="bg-brand-cyan h-1 rounded-full transition-all duration-500"
                 style={{ width: `${avgBattery}%` }}
               ></div>
             </div>
           </div>
         </div>
 
-        <div className="glass-panel glass-panel-hover p-6 rounded-2xl relative overflow-hidden group">
+        <div className="glass-panel glass-panel-hover p-4 rounded-2xl relative overflow-hidden group flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Aktywne Alarmy</p>
-              <h4 className={`text-3xl font-extrabold mt-2 ${activeAlarms > 0 ? 'text-amber-500' : 'text-white'}`}>
+              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Średnie RAM</p>
+              <h4 className="text-2xl font-extrabold text-white mt-1.5">
+                {avgMemory}%
+              </h4>
+            </div>
+            <div className="bg-indigo-500/10 p-2.5 rounded-xl border border-indigo-500/20 text-indigo-400 group-hover:scale-110 transition-transform">
+              <HardDrive size={16} />
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="w-full bg-slate-900 rounded-full h-1 overflow-hidden">
+              <div
+                className="bg-indigo-500 h-1 rounded-full transition-all duration-500"
+                style={{ width: `${avgMemory}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-panel glass-panel-hover p-4 rounded-2xl relative overflow-hidden group flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Średni Sygnał</p>
+              <h4 className="text-2xl font-extrabold text-white mt-1.5">
+                {avgSignal} <span className="text-xs text-slate-500 font-medium">dBm</span>
+              </h4>
+            </div>
+            <div className="bg-teal-500/10 p-2.5 rounded-xl border border-teal-500/20 text-teal-400 group-hover:scale-110 transition-transform">
+              <Wifi size={16} />
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="w-full bg-slate-900 rounded-full h-1 overflow-hidden">
+              <div
+                className="bg-teal-500 h-1 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, Math.max(0, (avgSignal + 100) * 1.4))}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="glass-panel glass-panel-hover p-4 rounded-2xl relative overflow-hidden group flex flex-col justify-between">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Aktywne Alarmy</p>
+              <h4 className={`text-2xl font-extrabold mt-1.5 ${activeAlarms > 0 ? 'text-amber-500' : 'text-white'}`}>
                 {activeAlarms}
               </h4>
             </div>
-            <div className={`p-3 rounded-xl border group-hover:scale-110 transition-transform ${activeAlarms > 0
+            <div className={`p-2.5 rounded-xl border group-hover:scale-110 transition-transform ${activeAlarms > 0
               ? 'bg-amber-500/10 border-amber-500/20 text-amber-500'
               : 'bg-slate-800 border-slate-700 text-slate-400'
               }`}>
-              <AlertTriangle size={20} />
+              <AlertTriangle size={16} />
             </div>
           </div>
-          <div className="mt-4 text-xs text-slate-400 flex items-center gap-1.5">
-            <Activity size={12} className={activeAlarms > 0 ? 'text-amber-500 animate-pulse' : 'text-slate-500'} />
-            <span>Stan Ostrzeżenie lub Błąd</span>
+          <div className="mt-3 text-[10px] text-slate-400 flex items-center gap-1">
+            <Activity size={10} className={activeAlarms > 0 ? 'text-amber-500 animate-pulse' : 'text-slate-500'} />
+            <span>Wymaga uwagi</span>
           </div>
         </div>
       </div>

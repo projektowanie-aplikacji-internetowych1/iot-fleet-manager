@@ -5,6 +5,8 @@ import { Register } from './views/Register';
 import { Dashboard } from './views/Dashboard';
 import { Devices } from './views/Devices';
 import { DeviceDetails } from './views/DeviceDetails';
+import { Users } from './views/Users';
+import { Profile } from './views/Profile';
 import { Layout } from './components/Layout';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -43,6 +45,22 @@ function App() {
           element={
             <PrivateRoute>
               <DeviceDetails />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <PrivateRoute>
+              <Users />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Profile />
             </PrivateRoute>
           }
         />

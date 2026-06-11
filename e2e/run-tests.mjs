@@ -127,6 +127,15 @@ async function testAuthRegister() {
     organizationName: 'Inna Org',
   });
   assert(duplicate.status === 409, 'Ponowna rejestracja tego samego emaila zwraca 409 Conflict');
+
+  // Sprzątanie po teście rejestracji za pomocą Admina
+  if (data?.user?.organizationId) {
+    const admin = await login('admin@iot.com', 'admin123');
+    const cleanupRes = await request('DELETE', `/organizations/${data.user.organizationId}`, null, admin.token);
+    assert(cleanupRes.status === 200, 'Sprzątanie po rejestracji: usunięcie organizacji zwraca 200');
+  } else {
+    assert(false, 'Sprzątanie po rejestracji: brak organizationId do usunięcia');
+  }
 }
 
 async function testMultiTenancyDevices() {
@@ -141,32 +150,38 @@ async function testMultiTenancyDevices() {
   // Admin widzi wszystkie urządzenia
   const adminDevices = await request('GET', '/devices', null, admin.token);
   assert(adminDevices.status === 200, 'Admin: GET /devices zwraca 200');
-  assert(adminDevices.data.length >= 5, `Admin: widzi >= 5 urządzeń (faktycznie: ${adminDevices.data.length})`);
+  assert(adminDevices.data.length >= 10, `Admin: widzi >= 10 urządzeń (faktycznie: ${adminDevices.data.length})`);
 
-  // User A (SpaceX Fleet) — widzi 2 urządzenia
+  // User A (SpaceX Fleet) — widzi 4 urządzenia
   const userADevices = await request('GET', '/devices', null, userA.token);
   assert(userADevices.status === 200, 'User A: GET /devices zwraca 200');
-  assert(userADevices.data.length === 2, `User A (SpaceX): widzi dokładnie 2 urządzenia (faktycznie: ${userADevices.data.length})`);
+  assert(userADevices.data.length === 4, `User A (SpaceX): widzi dokładnie 4 urządzenia (faktycznie: ${userADevices.data.length})`);
   const userANames = userADevices.data.map(d => d.name).sort();
   assert(userANames.includes('Drone Alpha'), 'User A: widzi Drone Alpha');
   assert(userANames.includes('Drone Beta'), 'User A: widzi Drone Beta');
+  assert(userANames.includes('Sensor Temp-1'), 'User A: widzi Sensor Temp-1');
+  assert(userANames.includes('Mars Rover X'), 'User A: widzi Mars Rover X');
   assert(!userANames.includes('Drone Gamma'), 'User A: NIE widzi Drone Gamma (inna org)');
 
-  // User B (Blue Origin Fleet) — widzi 2 urządzenia
+  // User B (Blue Origin Fleet) — widzi 3 urządzenia
   const userBDevices = await request('GET', '/devices', null, userB.token);
-  assert(userBDevices.data.length === 2, `User B (Blue Origin): widzi dokładnie 2 urządzenia (faktycznie: ${userBDevices.data.length})`);
+  assert(userBDevices.data.length === 3, `User B (Blue Origin): widzi dokładnie 3 urządzenia (faktycznie: ${userBDevices.data.length})`);
   const userBNames = userBDevices.data.map(d => d.name).sort();
   assert(userBNames.includes('Drone Gamma'), 'User B: widzi Drone Gamma');
-  assert(userBNames.includes('Drone Delta'), 'User B: widzi Drone Delta');
+  assert(userBNames.includes('Sensor Press-2'), 'User B: widzi Sensor Press-2');
+  assert(userBNames.includes('Gateway Lunar'), 'User B: widzi Gateway Lunar');
 
-  // User C (DJI Enterprise) — widzi 1 urządzenie
+  // User C (DJI Enterprise) — widzi 3 urządzenia
   const userCDevices = await request('GET', '/devices', null, userC.token);
-  assert(userCDevices.data.length === 1, `User C (DJI): widzi dokładnie 1 urządzenie (faktycznie: ${userCDevices.data.length})`);
-  assert(userCDevices.data[0].name === 'Sensor Hub X1', 'User C: widzi Sensor Hub X1');
+  assert(userCDevices.data.length === 3, `User C (DJI): widzi dokładnie 3 urządzenia (faktycznie: ${userCDevices.data.length})`);
+  const userCNames = userCDevices.data.map(d => d.name).sort();
+  assert(userCNames.includes('Drone Delta'), 'User C: widzi Drone Delta');
+  assert(userCNames.includes('Sensor Humid-3'), 'User C: widzi Sensor Humid-3');
+  assert(userCNames.includes('Security Cam-1'), 'User C: widzi Security Cam-1');
 
   // User D (SpaceX Fleet) — te same urządzenia co User A
   const userDDevices = await request('GET', '/devices', null, userD.token);
-  assert(userDDevices.data.length === 2, `User D (SpaceX): widzi dokładnie 2 urządzenia (faktycznie: ${userDDevices.data.length})`);
+  assert(userDDevices.data.length === 4, `User D (SpaceX): widzi dokładnie 4 urządzenia (faktycznie: ${userDDevices.data.length})`);
   const userDNames = userDDevices.data.map(d => d.name).sort();
   assert(
     JSON.stringify(userANames) === JSON.stringify(userDNames),
@@ -359,7 +374,7 @@ async function testAnalytics() {
   assert(typeof adminStatus.data.ONLINE === 'number', 'Analityka statusów: pole ONLINE jest liczbą');
   assert(typeof adminStatus.data.OFFLINE === 'number', 'Analityka statusów: pole OFFLINE jest liczbą');
   assert(typeof adminStatus.data.total === 'number', 'Analityka statusów: pole total jest liczbą');
-  assert(adminStatus.data.total >= 5, `Admin: total urządzeń >= 5 (faktycznie: ${adminStatus.data.total})`);
+  assert(adminStatus.data.total >= 10, `Admin: total urządzeń >= 10 (faktycznie: ${adminStatus.data.total})`);
 
   // User A — analityka ograniczona do organizacji
   const userABattery = await request('GET', '/analytics/battery', null, userA.token);
@@ -370,14 +385,16 @@ async function testAnalytics() {
   );
 
   const userAStatus = await request('GET', '/analytics/status', null, userA.token);
-  assert(userAStatus.data.total === 2, `User A: analityka statusów total === 2 (faktycznie: ${userAStatus.data.total})`);
+  assert(userAStatus.data.total === 4, `User A: analityka statusów total === 4 (faktycznie: ${userAStatus.data.total})`);
 }
 
 async function testOrganizations() {
   console.log('\nTest Suite: Organizacje');
 
   const admin = await login('admin@iot.com', 'admin123');
+  const userA = await login('usera@iot.com', 'user123');
 
+  // Pobranie listy organizacji przez admina
   const orgs = await request('GET', '/organizations', null, admin.token);
   assert(orgs.status === 200, 'GET /organizations zwraca status 200');
   assert(Array.isArray(orgs.data), 'Organizacje zwracane jako tablica');
@@ -387,11 +404,106 @@ async function testOrganizations() {
   assert(orgNames.includes('Blue Origin Fleet'), 'Istnieje organizacja Blue Origin Fleet');
   assert(orgNames.includes('DJI Enterprise'), 'Istnieje organizacja DJI Enterprise');
 
-  // Szczegóły organizacji
+  // Szczegóły organizacji dla Admina
   const spaceX = orgs.data.find(o => o.name === 'SpaceX Fleet');
   const orgDetail = await request('GET', `/organizations/${spaceX.id}`, null, admin.token);
   assert(orgDetail.status === 200, 'GET /organizations/:id zwraca 200');
-  assert(orgDetail.data.name === 'SpaceX Fleet', 'Szczegóły organizacji: nazwa poprawna');
+  assert(orgDetail.data.name === 'SpaceX Fleet', 'Szczegóły organizacji: nazwa SpaceX Fleet poprawna');
+
+  // Izolacja tenantów: Użytkownik A próbuje pobrać szczegóły innej organizacji
+  const dji = orgs.data.find(o => o.name === 'DJI Enterprise');
+  const forbiddenOrg = await request('GET', `/organizations/${dji.id}`, null, userA.token);
+  assert(forbiddenOrg.status === 403, 'Użytkownik A: próba pobrania szczegółów innej org zwraca 403 Forbidden');
+
+  // Użytkownik A widzi tylko swoją organizację na liście
+  const userAOrgs = await request('GET', '/organizations', null, userA.token);
+  assert(userAOrgs.data.length === 1, 'Użytkownik A: widzi dokładnie jedną organizację na liście');
+  assert(userAOrgs.data[0].name === 'SpaceX Fleet', 'Użytkownik A: widzi wyłącznie SpaceX Fleet');
+
+  // Tworzenie nowej organizacji przez Admina
+  const newOrgRes = await request('POST', '/organizations', { name: 'E2E Test Org 99' }, admin.token);
+  assert(newOrgRes.status === 201, 'Admin: POST /organizations (utworzenie nowej org) zwraca 201');
+  const createdOrgId = newOrgRes.data.id;
+
+  // Próba usunięcia organizacji przez nie-admina
+  const deleteForbidden = await request('DELETE', `/organizations/${createdOrgId}`, null, userA.token);
+  assert(deleteForbidden.status === 403, 'Użytkownik A: próba usunięcia org zwraca 403 Forbidden');
+
+  // Usunięcie nowej organizacji przez Admina
+  const deleteSuccess = await request('DELETE', `/organizations/${createdOrgId}`, null, admin.token);
+  assert(deleteSuccess.status === 200, 'Admin: DELETE /organizations/:id (usunięcie org) zwraca 200');
+}
+
+async function testUsers() {
+  console.log('\nTest Suite: Zarządzanie Użytkownikami i Profil');
+
+  const admin = await login('admin@iot.com', 'admin123');
+  const userA = await login('usera@iot.com', 'user123');
+
+  // Zwykły użytkownik próbuje uzyskać dostęp do listy zarządzania użytkownikami
+  const forbiddenUsersList = await request('GET', '/users', null, userA.token);
+  assert(forbiddenUsersList.status === 403, 'Użytkownik A: próba pobrania listy użytkowników zwraca 403 Forbidden');
+
+  // Administrator pobiera listę użytkowników
+  const usersList = await request('GET', '/users', null, admin.token);
+  assert(usersList.status === 200, 'Admin: GET /users zwraca status 200');
+  assert(Array.isArray(usersList.data), 'Lista użytkowników zwracana jako tablica');
+  const userEmails = usersList.data.map(u => u.email);
+  assert(userEmails.includes('admin@iot.com'), 'Lista użytkowników zawiera admin@iot.com');
+
+  // Użytkownik A pobiera własny profil
+  const profileRes = await request('GET', '/users/me', null, userA.token);
+  assert(profileRes.status === 200, 'Użytkownik A: GET /users/me zwraca status 200');
+  assert(profileRes.data.email === 'usera@iot.com', 'Profil: email jest prawidłowy (usera@iot.com)');
+  assert(profileRes.data.role === 'USER', 'Profil: rola jest prawidłowa (USER)');
+
+  // Użytkownik A aktualizuje adres e-mail własnego profilu
+  const tempEmail = `usera_temp_${Date.now()}@iot.com`;
+  const updateProfileRes = await request('PUT', '/users/me', { email: tempEmail }, userA.token);
+  assert(updateProfileRes.status === 200, 'Użytkownik A: PUT /users/me (zmiana emaila) zwraca 200');
+
+  // Weryfikacja możliwości zalogowania się z nowym e-mailem
+  const loginTemp = await login(tempEmail, 'user123');
+  assert(loginTemp.token !== undefined, 'Logowanie: nowe dane autoryzacyjne działają');
+
+  // Przywrócenie pierwotnego adresu e-mail Użytkownika A, aby uniknąć błędów w innych testach
+  const restoreProfileRes = await request('PUT', '/users/me', { email: 'usera@iot.com' }, loginTemp.token);
+  assert(restoreProfileRes.status === 200, 'Użytkownik A: przywrócenie domyślnego emaila zwraca 200');
+
+  // Admin CRUD - Walidacja tworzenia użytkownika (zbyt krótkie hasło)
+  const validationRes = await request('POST', '/users', {
+    email: `new_user_${Date.now()}@iot.com`,
+    password: '123',
+    role: 'USER',
+    organizationId: profileRes.data.organizationId
+  }, admin.token);
+  assert(validationRes.status === 400, 'Admin: POST /users z hasłem < 6 znaków zwraca 400 Bad Request');
+
+  // Admin CRUD - Poprawne utworzenie użytkownika
+  const newUserEmail = `new_e2e_user_${Date.now()}@iot.com`;
+  const createRes = await request('POST', '/users', {
+    email: newUserEmail,
+    password: 'secretPassword123',
+    role: 'USER',
+    organizationId: profileRes.data.organizationId
+  }, admin.token);
+  assert(createRes.status === 201, 'Admin: POST /users (utworzenie użytkownika) zwraca 201 Created');
+  const createdUserId = createRes.data.id;
+
+  // Admin CRUD - Aktualizacja użytkownika
+  const updateRes = await request('PUT', `/users/${createdUserId}`, {
+    email: newUserEmail,
+    role: 'ADMIN',
+  }, admin.token);
+  assert(updateRes.status === 200, 'Admin: PUT /users/:id (promocja na ADMINa) zwraca 200');
+
+  // Weryfikacja logowania i roli awansowanego użytkownika
+  const loginPromoted = await login(newUserEmail, 'secretPassword123');
+  assert(loginPromoted.user?.role === 'ADMIN', 'Logowanie: promowany użytkownik ma rolę ADMIN');
+
+  // Admin CRUD - Usunięcie użytkownika
+  const deleteRes = await request('DELETE', `/users/${createdUserId}`, null, admin.token);
+  assert(deleteRes.status === 200, 'Admin: DELETE /users/:id (usunięcie konta) zwraca 200');
 }
 
 async function main() {
@@ -404,7 +516,7 @@ async function main() {
   try {
     await fetch(`${API_URL}/health`);
   } catch (e) {
-    console.error(`\n❌ Nie można połączyć się z API pod adresem ${API_URL}`);
+    console.error(`\n Nie można połączyć się z API pod adresem ${API_URL}`);
     console.error('   Upewnij się, że środowisko Docker jest uruchomione:');
     console.error('   docker compose up --build\n');
     process.exit(1);
@@ -418,6 +530,7 @@ async function main() {
   await testAuthRegister();
   await testUnauthorizedAccess();
   await testOrganizations();
+  await testUsers();
   await testMultiTenancyDevices();
   await testDeviceDetails();
   await testDeviceMetrics();
@@ -433,7 +546,7 @@ async function main() {
 
   if (errors.length > 0) {
     console.log('\n  Nieudane testy:');
-    errors.forEach(e => console.log(`    ❌ ${e}`));
+    errors.forEach(e => console.log(`    ${e}`));
   }
 
   console.log('══════════════════════════════════════════════════════════\n');

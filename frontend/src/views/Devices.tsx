@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
-import { Plus, Search, Trash2, Eye, Server, RefreshCw, X, AlertTriangle, Key } from 'lucide-react';
+import { Plus, Search, Trash2, Eye, Server, RefreshCw, X, AlertTriangle, Key, Edit } from 'lucide-react';
 
 interface Device {
   id: string;
@@ -33,6 +33,7 @@ export const Devices: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingDevice, setEditingDevice] = useState<Device | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [newDevice, setNewDevice] = useState({
@@ -83,7 +84,39 @@ export const Devices: React.FC = () => {
     }
   };
 
-  const handleCreateDevice = async (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setEditingDevice(null);
+    setNewDevice({
+      name: '',
+      ipAddress: '',
+      port: 161,
+      snmpUsername: 'bootstrapUser',
+      authProtocol: 'SHA',
+      authPasswordHash: 'authPassword123',
+      privacyProtocol: 'AES',
+      privacyPasswordHash: 'privPassword456',
+      organizationId: organizations[0]?.id || '',
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (device: Device) => {
+    setEditingDevice(device);
+    setNewDevice({
+      name: device.name,
+      ipAddress: device.ipAddress,
+      port: device.port,
+      snmpUsername: device.snmpUsername,
+      authProtocol: device.authProtocol,
+      authPasswordHash: '',
+      privacyProtocol: device.privacyProtocol,
+      privacyPasswordHash: '',
+      organizationId: device.organizationId,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSaveDevice = async (e: React.FormEvent) => {
     e.preventDefault();
     setModalError(null);
     setModalLoading(true);
@@ -98,33 +131,47 @@ export const Devices: React.FC = () => {
         privacyProtocol: newDevice.privacyProtocol,
       };
 
-      if (newDevice.authProtocol !== 'NONE') {
-        payload.authPasswordHash = newDevice.authPasswordHash;
+      if (editingDevice) {
+        if (newDevice.authProtocol !== 'NONE') {
+          if (newDevice.authPasswordHash) {
+            payload.authPasswordHash = newDevice.authPasswordHash;
+          }
+        } else {
+          payload.authPasswordHash = null;
+        }
+
+        if (newDevice.privacyProtocol !== 'NONE') {
+          if (newDevice.privacyPasswordHash) {
+            payload.privacyPasswordHash = newDevice.privacyPasswordHash;
+          }
+        } else {
+          payload.privacyPasswordHash = null;
+        }
+      } else {
+        if (newDevice.authProtocol !== 'NONE') {
+          payload.authPasswordHash = newDevice.authPasswordHash;
+        }
+        if (newDevice.privacyProtocol !== 'NONE') {
+          payload.privacyPasswordHash = newDevice.privacyPasswordHash;
+        }
       }
-      if (newDevice.privacyProtocol !== 'NONE') {
-        payload.privacyPasswordHash = newDevice.privacyPasswordHash;
-      }
+
       if (currentUser?.role === 'ADMIN' && newDevice.organizationId) {
         payload.organizationId = newDevice.organizationId;
       }
 
-      const created = await api.createDevice(payload);
-      setDevices((prev) => [created, ...prev]);
+      if (editingDevice) {
+        await api.updateDevice(editingDevice.id, payload);
+        const allDevices = await api.getDevices();
+        setDevices(allDevices);
+      } else {
+        await api.createDevice(payload);
+        const allDevices = await api.getDevices();
+        setDevices(allDevices);
+      }
       setIsModalOpen(false);
-
-      setNewDevice({
-        name: '',
-        ipAddress: '',
-        port: 161,
-        snmpUsername: 'bootstrapUser',
-        authProtocol: 'SHA',
-        authPasswordHash: 'authPassword123',
-        privacyProtocol: 'AES',
-        privacyPasswordHash: 'privPassword456',
-        organizationId: organizations[0]?.id || '',
-      });
     } catch (err: any) {
-      setModalError(err.message || 'Nie udało się dodać urządzenia');
+      setModalError(err.message || 'Nie udało się zapisać urządzenia');
     } finally {
       setModalLoading(false);
     }
@@ -219,7 +266,7 @@ export const Devices: React.FC = () => {
           </select>
 
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenCreate}
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-brand-indigo to-indigo-600 hover:from-brand-indigo hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-indigo/15 hover:shadow-brand-indigo/35 transition-all duration-200 cursor-pointer"
           >
             <Plus size={16} />
@@ -308,6 +355,13 @@ export const Devices: React.FC = () => {
                             <Eye size={14} />
                           </Link>
                           <button
+                            onClick={() => handleOpenEdit(device)}
+                            className="p-2 bg-slate-900 border border-slate-800 hover:border-brand-indigo/25 hover:bg-brand-indigo/10 text-slate-500 hover:text-brand-indigo rounded-lg transition-all cursor-pointer"
+                            title="Edytuj"
+                          >
+                            <Edit size={14} />
+                          </button>
+                          <button
                             onClick={() => handleDelete(device.id, device.name)}
                             className="p-2 bg-slate-900 border border-slate-800 hover:border-rose-500/20 hover:bg-rose-500/10 text-slate-500 hover:text-rose-400 rounded-lg transition-all cursor-pointer"
                             title="Usuń"
@@ -330,8 +384,8 @@ export const Devices: React.FC = () => {
           <div className="w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
             <div className="flex justify-between items-center px-6 py-4.5 border-b border-slate-900 bg-slate-900/20">
               <div className="flex items-center gap-2 text-brand-indigo font-bold">
-                <Plus size={18} />
-                <span>Dodaj Nowe Urządzenie SNMPv3</span>
+                {editingDevice ? <Edit size={18} /> : <Plus size={18} />}
+                <span>{editingDevice ? 'Edytuj Urządzenie SNMPv3' : 'Dodaj Nowe Urządzenie SNMPv3'}</span>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -341,7 +395,7 @@ export const Devices: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateDevice} className="p-6 space-y-6">
+            <form onSubmit={handleSaveDevice} className="p-6 space-y-6">
               {modalError && (
                 <div className="bg-rose-500/10 border border-rose-500/20 px-4 py-3 rounded-2xl flex items-start gap-3 text-rose-400 text-xs">
                   <AlertTriangle className="shrink-0 mt-0.5" size={16} />
