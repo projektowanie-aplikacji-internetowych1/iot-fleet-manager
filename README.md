@@ -77,6 +77,52 @@ Po starcie bazy danych, seeder automatycznie tworzy testową strukturę **3 orga
 | **Drone Delta** | `mock-device-5` | 161 | SHA | AES | Blue Origin Fleet |
 | **Sensor Hub X1** | `mock-device-4` | 161 | SHA | AES | DJI Enterprise |
 
+## Dodawanie i Konfiguracja Nowych Urządzeń
+
+W systemie IoT Fleet Manager możesz elastycznie rozszerzać flotę monitorowanych dronów i sensorów. Działa to dwuetapowo: od strony panelu użytkownika oraz opcjonalnie w środowisku deweloperskim od strony wirtualnych kontenerów Docker.
+
+### 1. Dodawanie urządzenia z poziomu Panelu Użytkownika
+
+Użytkownik z rolą Administratora lub zalogowany członek danej organizacji może dodać nowe urządzenie za pomocą przycisku **Dodaj urządzenie** na liście urządzeń (`/devices`).
+
+* **Scenariusz A (Urządzenie istnieje w sieci):**
+  Jeśli podasz adres IP rzeczywistego fizycznego urządzenia w sieci lokalnej lub działającego kontenera Docker, które ma poprawnie skonfigurowanego agenta SNMPv3 z tymi samymi poświadczeniami, system automatycznie nawiąże z nim połączenie i pobierze unikalne, rzeczywiste dane telemetryczne.
+
+* **Scenariusz B (Urządzenie nie istnieje / błędny adres IP):**
+  Jeśli wpiszesz losowy lub błędny adres IP np. `192.168.1.99` lub `mock-device-99`, pod którym nie działa żaden agent SNMP, próba połączenia w tle odbywająca się cyklicznie co 30 sekund zakończy się niepowodzeniem. W takim przypadku system zapisze w bazie informację, że urządzenie jest **OFFLINE**, a wykresy oraz parametry na karcie szczegółów urządzenia nie wyświetlą żadnych danych telemetrycznych.
+
+---
+
+### 2. Dodawanie nowego, unikalnego urządzenia testowego w środowisku Docker
+
+Jeśli chcesz przetestować dodanie kolejnego wirtualnego urządzenia z unikalnymi wartościami telemetrycznymi w środowisku lokalnym:
+
+1. Otwórz plik `docker-compose.yml` i dodaj kolejny serwis (np. `mock-device-6`):
+   ```yaml
+     mock-device-6:
+       build:
+         context: ./docker/snmp-mock
+         dockerfile: Dockerfile
+       container_name: mock-device-6
+       restart: always
+       environment:
+         BATTERY_SEED: 77
+         TEMP_SEED: 31
+         DEVICE_STATUS: 1
+         CONTAINER_NAME: "mock-device-6"
+       ports:
+         - "166:161/udp"
+   ```
+2. Uruchom nowy kontener w terminalu:
+   ```bash
+   docker compose up -d mock-device-6
+   ```
+3. Zaloguj się do panelu aplikacji i dodaj nowe urządzenie wpisując:
+   * **Nazwa urządzenia:** np. `Drone Epsilon`
+   * **Adres IP / Host:** `mock-device-6`
+   * **Port UDP:** `161`
+4. **Efekt:** System w tle nawiąże komunikację z nowo powstałym kontenerem i po pierwszym cyklu odpytywania zacznie rejestrować unikalne odczyty zaczynające się od baterii 77% i temperatury 31°C.
+
 ---
 
 ## Instrukcja Testowania Manualnego
