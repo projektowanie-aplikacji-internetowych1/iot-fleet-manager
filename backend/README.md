@@ -15,8 +15,12 @@ Serwer backendowy dla systemu zarządzenia flotą dronów/urządzeń IoT, zbudow
   - Zadanie w tle uruchamiane automatycznie co **30 sekund**.
   - Odpytywanie wszystkich urządzeń równolegle protokołem SNMPv3, realizowana jest obsługa poziomów bezpieczeństwa: `noAuthNoPriv`, `authNoPriv`, `authPriv` z szyfrowaniem SHA/AES.
   - Automatyczne rejestrowanie statusu `OFFLINE`, jeśli urządzenie nie odpowie na zapytanie w zadanym limicie czasowym.
+- **Odpytywanie SNMPv3 na żądanie:**
+  - Obsługa natychmiastowego pobierania danych z urządzeń pomijając 30-sekundowy interwał.
+  - `POST /devices/poll` — odpytuje wszystkie urządzenia należące do organizacji użytkownika.
+  - `POST /devices/:id/poll` — odpytuje konkretne urządzenie z weryfikacją przynależności do organizacji.
 - **Analityka i Metryki:**
-  - Dynamiczne pobieranie historii metryk dla konkretnego urządzenia, w tym: bateria, temperatura, uptime, status.
+  - Dynamiczne pobieranie historii metryk dla konkretnego urządzenia, w tym: bateria, temperatura, uptime, status, RSSI, RAM.
   - Zagregowane analizy stanu baterii i liczby statusów dla dashboardu.
 
 ---
