@@ -61,6 +61,7 @@ export const Profile: React.FC = () => {
       if (current) {
         current.email = updated.email;
         localStorage.setItem('user_info', JSON.stringify(current));
+        window.dispatchEvent(new Event('profile_updated'));
       }
 
       setPassword('');
@@ -217,14 +218,11 @@ export const Profile: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <p className="text-xs text-slate-400 max-w-md">
-            Po usunięciu konta zostaniesz wylogowany. Twój adres e-mail zostanie zwolniony i będzie można go użyć do ponownej rejestracji.
-          </p>
+        <div className="pt-2">
           <button
             type="button"
             onClick={handleDeleteAccount}
-            className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer"
           >
             <Trash2 size={14} />
             Usuń konto

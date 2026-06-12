@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Plus, Search, Trash2, Shield, User, RefreshCw, X, AlertTriangle, Edit3 } from 'lucide-react';
 import { translateError } from '../utils/errors';
@@ -15,6 +16,7 @@ interface UserItem {
 }
 
 export const Users: React.FC = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,18 +80,25 @@ export const Users: React.FC = () => {
   };
 
   const handleDelete = async (id: string, userEmail: string) => {
-    if (currentUser && currentUser.email === userEmail) {
-      alert('Nie możesz usunąć własnego konta.');
-      return;
-    }
+    const isSelf = currentUser && currentUser.email === userEmail;
+    const confirmMsg = isSelf
+      ? 'Czy na pewno chcesz usunąć swoje własne konto? Ta operacja jest nieodwracalna, a Twoje dane zostaną bezpowrotnie skasowane.'
+      : `Czy na pewno chcesz usunąć użytkownika "${userEmail}"?`;
 
-    if (!window.confirm(`Czy na pewno chcesz usunąć użytkownika "${userEmail}"?`)) {
+    if (!window.confirm(confirmMsg)) {
       return;
     }
 
     try {
-      await api.deleteUser(id);
-      setUsers((prev) => prev.filter((u) => u.id !== id));
+      if (isSelf) {
+        await api.deleteProfile();
+        alert('Twoje konto zostało pomyślnie usunięte.');
+        api.logout();
+        navigate('/login');
+      } else {
+        await api.deleteUser(id);
+        setUsers((prev) => prev.filter((u) => u.id !== id));
+      }
     } catch (err: any) {
       const translated = translateError(err.message || 'Błąd podczas usuwania użytkownika');
       alert(translated);
@@ -238,9 +247,8 @@ export const Users: React.FC = () => {
                             <Edit3 size={14} />
                           </button>
                           <button
-                            disabled={currentUser?.email === user.email}
                             onClick={() => handleDelete(user.id, user.email)}
-                            className="p-2 bg-slate-900 border border-slate-800 hover:border-rose-500/20 hover:bg-rose-500/10 text-slate-500 hover:text-rose-400 rounded-lg transition-all cursor-pointer disabled:opacity-20"
+                            className="p-2 bg-slate-900 border border-slate-800 hover:border-rose-500/20 hover:bg-rose-500/10 text-slate-500 hover:text-rose-400 rounded-lg transition-all cursor-pointer"
                             title="Usuń"
                           >
                             <Trash2 size={14} />
