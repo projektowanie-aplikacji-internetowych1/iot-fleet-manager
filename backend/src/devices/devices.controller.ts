@@ -35,7 +35,7 @@ export class DevicesController {
 
   @Post('poll')
   @ApiOperation({ summary: 'Poll all devices in user\'s organization on demand' })
-  @ApiResponse({ status: 200, description: 'All devices polled successfully.' })
+  @ApiResponse({ status: 201, description: 'All devices polled successfully.' })
   async pollAll(@CurrentUser() user: AuthenticatedUser) {
     if (user.role === Role.ADMIN) {
       return this.devicesService.pollAllDevicesOnDemand();
@@ -45,7 +45,7 @@ export class DevicesController {
 
   @Post(':id/poll')
   @ApiOperation({ summary: 'Poll a specific device on demand' })
-  @ApiResponse({ status: 200, description: 'Device polled successfully.' })
+  @ApiResponse({ status: 201, description: 'Device polled successfully.' })
   @ApiResponse({ status: 403, description: 'Forbidden: Access denied.' })
   @ApiResponse({ status: 404, description: 'Device not found.' })
   async pollOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
