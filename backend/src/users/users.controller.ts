@@ -34,6 +34,14 @@ export class UsersController {
     return this.usersService.update(user.id, payload, user.organizationId, false);
   }
 
+  @Delete('me')
+  @ApiOperation({ summary: 'Delete current user account (self-deletion)' })
+  @ApiResponse({ status: 200, description: 'User deleted successfully.' })
+  @ApiResponse({ status: 400, description: 'Cannot delete last admin.' })
+  async removeSelf(@CurrentUser() user: AuthenticatedUser) {
+    return this.usersService.remove(user.id);
+  }
+
   @Get()
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'List all users (Admin only)' })

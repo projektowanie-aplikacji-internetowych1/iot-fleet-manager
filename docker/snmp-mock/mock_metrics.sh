@@ -5,12 +5,16 @@ NOW=$(date +%s)
 UPTIME=$(( NOW - START_TIME ))
 
 DRAIN_SPEED=${BATTERY_DRAIN_SPEED:-1}
+DRAINED=$(awk -v uptime="$UPTIME" -v speed="$DRAIN_SPEED" 'BEGIN {
+    if (speed <= 0) {
+        print 0
+    } else {
+        val = (uptime * speed) / 60
+        print int(val)
+    }
+}')
+
 SEED_BATTERY=${BATTERY_SEED:-${MOCK_BATTERY:-100}}
-if [ $DRAIN_SPEED -le 0 ]; then
-    DRAINED=0
-else
-    DRAINED=$(( (UPTIME * DRAIN_SPEED) / 60 ))
-fi
 BATTERY=$(( SEED_BATTERY - DRAINED ))
 if [ $BATTERY -lt 0 ]; then
     BATTERY=0
@@ -23,12 +27,15 @@ fi
 
 SEED_TEMP=${TEMP_SEED:-${MOCK_TEMP:-25}}
 TEMP_FLUC=${TEMP_FLUCTUATION:-5}
-if [ $TEMP_FLUC -le 1 ]; then
-    FLUC=0
-else
-    FLUC=$(( (NOW % TEMP_FLUC) - (TEMP_FLUC / 2) ))
-fi
-TEMPERATURE=$(( SEED_TEMP + FLUC ))
+TEMPERATURE=$(awk -v now="$NOW" -v seed="$SEED_TEMP" -v fluc="$TEMP_FLUC" 'BEGIN {
+    fluc_int = int(fluc)
+    if (fluc_int <= 1) {
+        print int(seed)
+    } else {
+        val = (now % fluc_int) - int(fluc_int / 2)
+        print int(seed + val)
+    }
+}')
 
 SEED_SIGNAL=${SIGNAL_SEED:- -60}
 SIGNAL_FLUC=$(( (NOW % 9) - 4 ))

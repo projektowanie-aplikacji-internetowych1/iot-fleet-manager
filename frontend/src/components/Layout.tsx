@@ -10,7 +10,15 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const currentUser = api.getCurrentUser();
+  const [currentUser, setCurrentUser] = React.useState(api.getCurrentUser());
+
+  React.useEffect(() => {
+    const handleUpdate = () => {
+      setCurrentUser(api.getCurrentUser());
+    };
+    window.addEventListener('profile_updated', handleUpdate);
+    return () => window.removeEventListener('profile_updated', handleUpdate);
+  }, []);
 
   const handleLogout = () => {
     api.logout();

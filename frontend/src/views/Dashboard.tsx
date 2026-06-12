@@ -28,12 +28,15 @@ export const Dashboard: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async (isSilent = false) => {
+  const fetchData = async (isSilent = false, forcePoll = false) => {
     if (!isSilent) setLoading(true);
     else setRefreshing(true);
     setError(null);
 
     try {
+      if (forcePoll) {
+        await api.pollAllDevices();
+      }
       const [battery, status, devices] = await Promise.all([
         api.getBatteryAnalytics(),
         api.getStatusAnalytics(),
@@ -117,7 +120,7 @@ export const Dashboard: React.FC = () => {
     : [];
 
   const barData = batteryData
-    ? batteryData.devices.slice(0, 6).map(d => ({
+    ? batteryData.devices.map(d => ({
       name: d.name,
       'Bateria (%)': d.battery,
     }))
@@ -131,7 +134,7 @@ export const Dashboard: React.FC = () => {
           <p className="text-slate-400 text-xs mt-1">Zagregowane podsumowanie odczytów w czasie rzeczywistym</p>
         </div>
         <button
-          onClick={() => fetchData(true)}
+          onClick={() => fetchData(true, true)}
           disabled={refreshing}
           className="flex items-center gap-2 px-4 py-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold rounded-xl text-slate-300 transition-all duration-200 cursor-pointer disabled:opacity-50"
         >
@@ -317,27 +320,55 @@ export const Dashboard: React.FC = () => {
           ) : (
             <div className="flex-1 min-h-0">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
-                  <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis domain={[0, 100]} stroke="#64748b" fontSize={10} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#0f172a',
-                      borderColor: '#1e293b',
-                      borderRadius: '12px',
-                      color: '#cbd5e1',
-                    }}
-                  />
-                  <Bar dataKey="Bateria (%)" fill="#06b6d4" radius={[6, 6, 0, 0]} maxBarSize={45}>
-                    {barData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry['Bateria (%)'] < 20 ? '#f43f5e' : entry['Bateria (%)'] < 50 ? '#f59e0b' : '#06b6d4'}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
+                {barData.length > 5 ? (
+                  <BarChart
+                    layout="vertical"
+                    data={barData}
+                    margin={{ top: 10, right: 10, left: 10, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" horizontal={false} />
+                    <XAxis type="number" domain={[0, 100]} stroke="#64748b" fontSize={10} tickLine={false} />
+                    <YAxis type="category" dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} width={110} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#0f172a',
+                        borderColor: '#1e293b',
+                        borderRadius: '12px',
+                        color: '#cbd5e1',
+                      }}
+                    />
+                    <Bar dataKey="Bateria (%)" fill="#06b6d4" radius={[0, 6, 6, 0]} maxBarSize={15}>
+                      {barData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry['Bateria (%)'] < 20 ? '#f43f5e' : entry['Bateria (%)'] < 50 ? '#f59e0b' : '#06b6d4'}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                ) : (
+                  <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
+                    <XAxis dataKey="name" stroke="#64748b" fontSize={10} tickLine={false} />
+                    <YAxis domain={[0, 100]} stroke="#64748b" fontSize={10} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#0f172a',
+                        borderColor: '#1e293b',
+                        borderRadius: '12px',
+                        color: '#cbd5e1',
+                      }}
+                    />
+                    <Bar dataKey="Bateria (%)" fill="#06b6d4" radius={[6, 6, 0, 0]} maxBarSize={45}>
+                      {barData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry['Bateria (%)'] < 20 ? '#f43f5e' : entry['Bateria (%)'] < 50 ? '#f59e0b' : '#06b6d4'}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                )}
               </ResponsiveContainer>
             </div>
           )}

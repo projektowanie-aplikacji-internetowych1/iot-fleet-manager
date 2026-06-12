@@ -172,10 +172,32 @@ export const api = {
     });
   },
 
+  async getProfile(): Promise<any> {
+    return apiFetch('/users/me');
+  },
+
   async updateProfile(profileData: any): Promise<any> {
     return apiFetch('/users/me', {
       method: 'PUT',
       body: JSON.stringify(profileData),
+    });
+  },
+
+  async deleteProfile(): Promise<any> {
+    return apiFetch('/users/me', {
+      method: 'DELETE',
+    });
+  },
+
+  async pollAllDevices(): Promise<any> {
+    return apiFetch('/devices/poll', {
+      method: 'POST',
+    });
+  },
+
+  async pollDevice(id: string): Promise<any> {
+    return apiFetch(`/devices/${id}/poll`, {
+      method: 'POST',
     });
   },
 };

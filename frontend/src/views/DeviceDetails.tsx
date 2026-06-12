@@ -37,13 +37,16 @@ export const DeviceDetails: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async (isSilent = false) => {
+  const fetchData = async (isSilent = false, forcePoll = false) => {
     if (!id) return;
     if (!isSilent) setLoading(true);
     else setRefreshing(true);
     setError(null);
 
     try {
+      if (forcePoll) {
+        await api.pollDevice(id);
+      }
       const [deviceData, metricsData] = await Promise.all([
         api.getDevice(id),
         api.getDeviceMetrics(id),
@@ -183,7 +186,7 @@ export const DeviceDetails: React.FC = () => {
         </div>
 
         <button
-          onClick={() => fetchData(true)}
+          onClick={() => fetchData(true, true)}
           disabled={refreshing}
           className="flex items-center gap-2 px-4 py-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold rounded-xl text-slate-300 transition-all cursor-pointer"
         >

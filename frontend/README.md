@@ -4,23 +4,21 @@ Aplikacja kliencka Single Page Application dla systemu zarządzenia flotą urzą
 
 ## Główne Funkcjonalności
 
-- **Panel Główny:**
-  - Podsumowanie floty: liczba urządzeń online/offline, średni poziom baterii oraz aktywne alarmy.
+- **Panel Główny (Dashboard):**
+  - Podsumowanie floty: liczba urządzeń online/offline, średni poziom baterii, średnie RAM, średni sygnał oraz aktywne alarmy.
   - Wykres kołowy rozkładu statusów urządzeń.
   - Wykres słupkowy poziomu naładowania baterii poszczególnych urządzeń.
-  - Panel ostrzeżeń dla urządzeń o niskim poziomie baterii.
+  - Przycisk wymuszający natychmiastowe odświeżenie danych telemetrycznych dla całej organizacji.
+  - Panel ostrzeżeń dla urządzeń o krytycznie niskim poziomie baterii.
 - **Zarządzanie Urządzeniami:**
   - Tabela ze szczegółowymi informacjami tj.: Nazwa, IP, Port, Status, Poziom baterii, Organizacja.
   - Wyszukiwarka urządzeń po nazwie i adresie IP oraz filtry statusów.
-  - Formularz dodawania nowego urządzenia z pełną konfiguracją SNMPv3.
-  - Możliwość usuwania urządzeń z floty.
+  - Formularz dodawania nowego urządzenia z konfiguracją SNMPv3.
+  - Możliwość modyfikacji danych urządzenia oraz usuwania z floty.
 - **Szczegóły Urządzenia:**
-  - Odczyty telemetryczne w czasie rzeczywistym.
-  - Wykresy historyczne:
-    - Wykres poziomu baterii (%).
-    - Wykres temperatury (°C).
-    - Wykres przyrostu uptime w czasie.
-- **Autoryzacja i Izolacja Dzierżawców:**
+  - Odczyty telemetryczne w czasie rzeczywistym i przycisk natychmiastowej aktualizacji danych z urządzenia (indywidualne odpytanie SNMP).
+  - Wykresy historyczne (bateria, temperatura, RAM, sygnał, uptime).
+- **Autoryzacja i Izolacja Dzierżawców (Multi-tenancy):**
   - Formularze logowania (`/login`) oraz rejestracji z automatycznym dołączeniem do organizacji (`/register`).
   - Dostęp do widoków chroniony przez `PrivateRoute`.
   - Wsparcie dla ról użytkowników:

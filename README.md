@@ -278,11 +278,34 @@ Poniższa instrukcja prowadzi krok po kroku przez wszystkie kluczowe funkcjonaln
 5. Kliknij **Zapisz**.
 6. **Oczekiwany wynik:** Urządzenie natychmiast zmienia nazwę na liście na `Drone Alpha Modified`.
 
+### Test 17: Odświeżanie danych na żądanie (SNMP on-demand)
+
+1. Zaloguj się jako **usera@iot.com** / `user123`.
+2. Wejdź na **Panel Główny** lub zakładkę **Urządzenia Fleet**.
+3. Kliknij przycisk **Odśwież** w prawym górnym rogu panelu lub nad listą urządzeń.
+4. **Oczekiwany wynik:** Przycisk zmieni się na "Odświeżanie...", a w logach dockera zobaczysz natychmiastowe wysłanie zapytań SNMP do urządzeń mockujących. Po ukończeniu odpytywania, najnowsze dane telemetryczne tj.: bateria, temperatura, RAM, sygnał, status zostaną załadowane i zaktualizowane na wykresach oraz w tabelach.
+5. Kliknij na szczegóły urządzenia `Drone Alpha`.
+6. Kliknij przycisk **Odśwież dane** na górze strony szczegółów.
+7. **Oczekiwany wynik:** System wyśle żądanie SNMP tylko dla tego konkretnego urządzenia. Logi w dockerze potwierdzą zapytanie SNMP dla `mock-device-1`. Wykresy i wskaźniki na stronie szczegółów zostaną zaktualizowane.
+
+### Test 18: Samodzielne usunięcie konta
+
+1. Przejdź do strony rejestracji i utwórz tymczasowe konto: **temp@iot.com** / `temp123` z nową organizacją.
+2. Zostaniesz automatycznie zalogowany. Wejdź w zakładkę **Mój Profil** w lewym dolnym rogu.
+3. Sprawdź, czy dane profilu wyświetlają się poprawnie.
+4. Przewiń na dół do sekcji **Usuń konto** i kliknij przycisk.
+5. Zaakceptuj pojawiające się okienko potwierdzenia.
+6. **Oczekiwany wynik:** Zostaniesz wylogowany i przekierowany na ekran logowania.
+7. Spróbuj zalogować się danymi `temp@iot.com` / `temp123`.
+8. **Oczekiwany wynik:** Logowanie nie powiedzie się z racji usunięcia konta.
+9. Przejdź do rejestracji i załóż konto ponownie na ten sam adres `temp@iot.com`.
+10. **Oczekiwany wynik:** Rejestracja przebiegnie pomyślnie, adres został prawidłowo zwolniony z bazy danych.
+
 ---
 
 ## Automatyczne Testy End-to-End
 
-Oprócz testów manualnych, w projekcie dostępny jest skrypt automatycznych testów E2E, który weryfikuje **117 przypadków testowych** pokrywających wszystkie kluczowe funkcjonalności API.
+Oprócz testów manualnych, w projekcie dostępny jest skrypt automatycznych testów E2E, który weryfikuje **127 przypadków testowych** pokrywających wszystkie kluczowe funkcjonalności API.
 
 ### Wymagania:
 - Działające środowisko Docker (`docker compose up --build`)
@@ -303,7 +326,7 @@ node e2e/run-tests.mjs
 | Rejestracja | 5 | Tworzenie nowego konta, duplikacja e-maila, czyszczenie po rejestracji |
 | Dostęp Nieautoryzowany | 4 | Brak tokenu JWT, fałszywy token |
 | Organizacje | 13 | Lista, szczegóły, izolacja oraz CRUD organizacji |
-| Zarządzanie Użytkownikami i Profil | 15 | Pobieranie, modyfikacja profilu, dodawanie, aktualizacja ról, usuwanie kont |
+| Zarządzanie Użytkownikami i Profil | 19 | Pobieranie, modyfikacja profilu, samousunięcie konta, dodawanie, aktualizacja ról, usuwanie kont |
 | Multi-Tenancy | 19 | Izolacja urządzeń per organizacja dla 5 użytkowników |
 | Szczegóły Urządzenia | 8 | Pola konfiguracji SNMPv3 |
 | Metryki Urządzenia | 7 | Dane telemetryczne z pollingu SNMP |
@@ -311,5 +334,6 @@ node e2e/run-tests.mjs
 | Walidacja Danych | 4 | Brak wymaganych pól, port poza zakresem, błędny enum |
 | Obsługa Błędów (404) | 2 | Pobieranie/usuwanie nieistniejącego urządzenia |
 | Analityka (OLAP) | 10 | Agregacje baterii i statusów, filtrowanie per organizacja |
-| **Razem** | **117** | |
+| Odpytywanie SNMP na żądanie | 6 | Odpytywanie wszystkich urządzeń, per organizacja oraz pojedynczego, kontrola uprawnień |
+| **Razem** | **127** | |
 

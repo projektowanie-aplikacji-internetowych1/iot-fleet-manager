@@ -504,6 +504,61 @@ async function testUsers() {
   // Admin CRUD - Usunięcie użytkownika
   const deleteRes = await request('DELETE', `/users/${createdUserId}`, null, admin.token);
   assert(deleteRes.status === 200, 'Admin: DELETE /users/:id (usunięcie konta) zwraca 200');
+
+  // Samousunięcie
+  const selfDeleteEmail = `self_delete_user_${Date.now()}@iot.com`;
+  const registerSelfRes = await request('POST', '/auth/register', {
+    email: selfDeleteEmail,
+    password: 'password123',
+    organizationName: `Org Self Delete ${Date.now()}`
+  });
+  assert(registerSelfRes.status === 201, 'Rejestracja tymczasowego użytkownika do samousunięcia');
+  const selfToken = registerSelfRes.data.accessToken;
+
+  const selfDeleteRes = await request('DELETE', '/users/me', null, selfToken);
+  assert(selfDeleteRes.status === 200, 'Użytkownik: DELETE /users/me (samousunięcie) zwraca 200');
+
+  const getProfileAfterDelete = await request('GET', '/users/me', null, selfToken);
+  assert(getProfileAfterDelete.status === 404 || getProfileAfterDelete.status === 401, 'Próba pobrania profilu usuniętego użytkownika zwraca 404 Not Found lub 401');
+
+  const loginAfterDelete = await request('POST', '/auth/login', { email: selfDeleteEmail, password: 'password123' });
+  assert(loginAfterDelete.status === 401 || loginAfterDelete.status === 400, 'Próba logowania na usunięte konto zwraca błąd autoryzacji');
+}
+
+async function testOnDemandPolling() {
+  console.log('\nTest Suite: Odpytywanie SNMP na żądanie');
+
+  const admin = await login('admin@iot.com', 'admin123');
+  const userA = await login('usera@iot.com', 'user123');
+
+  // Brak autoryzacji
+  const noToken = await request('POST', '/devices/poll');
+  assert(noToken.status === 401, 'POST /devices/poll bez tokenu zwraca 401 Unauthorized');
+
+  // Poprawne odpytywanie wszystkich urządzeń przez Admina
+  const adminPoll = await request('POST', '/devices/poll', null, admin.token);
+  assert(adminPoll.status === 201, 'Admin: POST /devices/poll (odpytanie wszystkich) zwraca 201 Created');
+
+  // Poprawne odpytywanie urządzeń w organizacji przez User A
+  const userAPoll = await request('POST', '/devices/poll', null, userA.token);
+  assert(userAPoll.status === 201, 'User A: POST /devices/poll (odpytanie org) zwraca 201 Created');
+
+  // Pobranie urządzenia w celu odpytania pojedynczego
+  const devices = await request('GET', '/devices', null, admin.token);
+  const droneAlpha = devices.data.find(d => d.name === 'Drone Alpha');
+  const droneDelta = devices.data.find(d => d.name === 'Drone Delta'); // Delta należy do org DJI (User C)
+
+  // Odpytanie własnego urządzenia (User A dla Drone Alpha w SpaceX Fleet)
+  const userAOnePoll = await request('POST', `/devices/${droneAlpha.id}/poll`, null, userA.token);
+  assert(userAOnePoll.status === 201, 'User A: POST /devices/:id/poll własnego urządzenia zwraca 201 Created');
+
+  // Próba odpytania cudzego urządzenia (User A próbuje odpytać Drone Delta z DJI)
+  const forbiddenPoll = await request('POST', `/devices/${droneDelta.id}/poll`, null, userA.token);
+  assert(forbiddenPoll.status === 403, 'User A: POST /devices/:id/poll urządzenia z innej org zwraca 403 Forbidden');
+
+  // Odpytanie urządzenia przez Admina (dowolne urządzenie)
+  const adminOnePoll = await request('POST', `/devices/${droneDelta.id}/poll`, null, admin.token);
+  assert(adminOnePoll.status === 201, 'Admin: POST /devices/:id/poll dowolnego urządzenia zwraca 201 Created');
 }
 
 async function main() {
@@ -538,6 +593,7 @@ async function main() {
   await testValidation();
   await testDeviceNotFound();
   await testAnalytics();
+  await testOnDemandPolling();
 
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
