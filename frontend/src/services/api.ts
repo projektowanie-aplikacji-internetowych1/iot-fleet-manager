@@ -178,4 +178,16 @@ export const api = {
       body: JSON.stringify(profileData),
     });
   },
+
+  async pollAllDevices(): Promise<any> {
+    return apiFetch('/devices/poll', {
+      method: 'POST',
+    });
+  },
+
+  async pollDevice(id: string): Promise<any> {
+    return apiFetch(`/devices/${id}/poll`, {
+      method: 'POST',
+    });
+  },
 };

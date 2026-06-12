@@ -26,6 +26,7 @@ export const Devices: React.FC = () => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const currentUser = api.getCurrentUser();
 
@@ -64,6 +65,19 @@ export const Devices: React.FC = () => {
       setError(err.message || 'Błąd podczas wczytywania urządzeń');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await api.pollAllDevices();
+      const data = await api.getDevices();
+      setDevices(data);
+    } catch (err: any) {
+      alert(err.message || 'Błąd podczas odpytywania urządzeń');
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -264,6 +278,15 @@ export const Devices: React.FC = () => {
             <option value="ERROR">Błędy</option>
             <option value="OFFLINE">Wyłączone (Offline)</option>
           </select>
+
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+            {refreshing ? 'Odświeżanie...' : 'Odśwież'}
+          </button>
 
           <button
             onClick={handleOpenCreate}

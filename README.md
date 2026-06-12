@@ -278,11 +278,21 @@ Poniższa instrukcja prowadzi krok po kroku przez wszystkie kluczowe funkcjonaln
 5. Kliknij **Zapisz**.
 6. **Oczekiwany wynik:** Urządzenie natychmiast zmienia nazwę na liście na `Drone Alpha Modified`.
 
+### Test 17: Odświeżanie danych na żądanie (SNMP on-demand)
+
+1. Zaloguj się jako **usera@iot.com** / `user123`.
+2. Wejdź na **Panel Główny** lub zakładkę **Urządzenia Fleet**.
+3. Kliknij przycisk **Odśwież** w prawym górnym rogu panelu lub nad listą urządzeń.
+4. **Oczekiwany wynik:** Przycisk zmieni się na "Odświeżanie...", a w logach dockera zobaczysz natychmiastowe wysłanie zapytań SNMP do urządzeń mockujących. Po ukończeniu odpytywania, najnowsze dane telemetryczne tj.: bateria, temperatura, RAM, sygnał, status zostaną załadowane i zaktualizowane na wykresach oraz w tabelach.
+5. Kliknij na szczegóły urządzenia `Drone Alpha`.
+6. Kliknij przycisk **Odśwież dane** na górze strony szczegółów.
+7. **Oczekiwany wynik:** System wyśle żądanie SNMP tylko dla tego konkretnego urządzenia. Logi w dockerze potwierdzą zapytanie SNMP dla `mock-device-1`. Wykresy i wskaźniki na stronie szczegółów zostaną zaktualizowane.
+
 ---
 
 ## Automatyczne Testy End-to-End
 
-Oprócz testów manualnych, w projekcie dostępny jest skrypt automatycznych testów E2E, który weryfikuje **117 przypadków testowych** pokrywających wszystkie kluczowe funkcjonalności API.
+Oprócz testów manualnych, w projekcie dostępny jest skrypt automatycznych testów E2E, który weryfikuje **123 przypadki testowe** pokrywających wszystkie kluczowe funkcjonalności API.
 
 ### Wymagania:
 - Działające środowisko Docker (`docker compose up --build`)
@@ -311,5 +321,6 @@ node e2e/run-tests.mjs
 | Walidacja Danych | 4 | Brak wymaganych pól, port poza zakresem, błędny enum |
 | Obsługa Błędów (404) | 2 | Pobieranie/usuwanie nieistniejącego urządzenia |
 | Analityka (OLAP) | 10 | Agregacje baterii i statusów, filtrowanie per organizacja |
-| **Razem** | **117** | |
+| Odpytywanie SNMP na żądanie | 6 | Odpytywanie wszystkich urządzeń, per organizacja oraz pojedynczego, kontrola uprawnień |
+| **Razem** | **123** | |
 

@@ -33,6 +33,29 @@ export class DevicesController {
     return this.devicesService.findAll(user.organizationId);
   }
 
+  @Post('poll')
+  @ApiOperation({ summary: 'Poll all devices in user\'s organization on demand' })
+  @ApiResponse({ status: 200, description: 'All devices polled successfully.' })
+  async pollAll(@CurrentUser() user: AuthenticatedUser) {
+    if (user.role === Role.ADMIN) {
+      return this.devicesService.pollAllDevicesOnDemand();
+    }
+    return this.devicesService.pollAllDevicesOnDemand(user.organizationId);
+  }
+
+  @Post(':id/poll')
+  @ApiOperation({ summary: 'Poll a specific device on demand' })
+  @ApiResponse({ status: 200, description: 'Device polled successfully.' })
+  @ApiResponse({ status: 403, description: 'Forbidden: Access denied.' })
+  @ApiResponse({ status: 404, description: 'Device not found.' })
+  async pollOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    const device = await this.devicesService.findOne(id);
+    if (user.role !== Role.ADMIN && device.organizationId !== user.organizationId) {
+      throw new ForbiddenException('You do not have access to this device');
+    }
+    return this.devicesService.pollDeviceOnDemand(id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get details of a specific device' })
   @ApiResponse({ status: 200, description: 'Successfully retrieved device details.' })

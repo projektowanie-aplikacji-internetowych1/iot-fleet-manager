@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDeviceDto } from './dto/create-device.dto';
+import { SnmpService } from '../snmp/snmp.service';
 
 @Injectable()
 export class DevicesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private snmpService: SnmpService,
+  ) { }
 
   async create(dto: CreateDeviceDto, userOrgId: string, isAdmin: boolean) {
     let targetOrgId = userOrgId;
@@ -124,5 +128,79 @@ export class DevicesService {
       take: limit,
     });
     return metrics.reverse();
+  }
+
+  async pollDeviceOnDemand(id: string) {
+    const device = await this.prisma.device.findUnique({
+      where: { id },
+    });
+    if (!device) {
+      throw new NotFoundException(`Device with ID ${id} not found`);
+    }
+
+    try {
+      const metrics = await this.snmpService.pollDevice(device);
+      return await this.prisma.deviceMetric.create({
+        data: {
+          deviceId: device.id,
+          battery: metrics.battery,
+          uptime: metrics.uptime,
+          status: metrics.status,
+          temperature: metrics.temperature,
+          signalStrength: metrics.signalStrength,
+          memoryUsage: metrics.memoryUsage,
+        },
+      });
+    } catch (error: any) {
+      return await this.prisma.deviceMetric.create({
+        data: {
+          deviceId: device.id,
+          battery: 0,
+          uptime: 0,
+          status: 'OFFLINE',
+          temperature: 0,
+          signalStrength: -100,
+          memoryUsage: 0,
+        },
+      });
+    }
+  }
+
+  async pollAllDevicesOnDemand(organizationId?: string) {
+    const devices = await this.prisma.device.findMany({
+      where: organizationId ? { organizationId } : {},
+    });
+
+    const pollPromises = devices.map(async (device) => {
+      try {
+        const metrics = await this.snmpService.pollDevice(device);
+        await this.prisma.deviceMetric.create({
+          data: {
+            deviceId: device.id,
+            battery: metrics.battery,
+            uptime: metrics.uptime,
+            status: metrics.status,
+            temperature: metrics.temperature,
+            signalStrength: metrics.signalStrength,
+            memoryUsage: metrics.memoryUsage,
+          },
+        });
+      } catch (error: any) {
+        await this.prisma.deviceMetric.create({
+          data: {
+            deviceId: device.id,
+            battery: 0,
+            uptime: 0,
+            status: 'OFFLINE',
+            temperature: 0,
+            signalStrength: -100,
+            memoryUsage: 0,
+          },
+        });
+      }
+    });
+
+    await Promise.allSettled(pollPromises);
+    return { message: 'All devices polled successfully' };
   }
 }
