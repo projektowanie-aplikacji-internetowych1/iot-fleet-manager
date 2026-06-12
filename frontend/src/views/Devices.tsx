@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { Plus, Search, Trash2, Eye, Server, RefreshCw, X, AlertTriangle, Key, Edit } from 'lucide-react';
+import { translateError } from '../utils/errors';
 
 interface Device {
   id: string;
@@ -126,12 +127,25 @@ export const Devices: React.FC = () => {
     setRefreshing(true);
     setError(null);
     try {
-      await Promise.all(selectedIds.map((id) => api.deleteDevice(id)));
-      setSelectedIds([]);
+      let errors: string[] = [];
+      const results = await Promise.allSettled(selectedIds.map((id) => api.deleteDevice(id)));
+      results.forEach((res) => {
+        if (res.status === 'rejected') {
+          const rawMsg = res.reason?.message || res.reason || 'Błąd';
+          const translated = translateError(rawMsg);
+          errors.push(translated);
+        }
+      });
+
       const data = await api.getDevices();
       setDevices(data);
+      setSelectedIds([]);
+
+      if (errors.length > 0) {
+        setError(errors.join(', '));
+      }
     } catch (err: any) {
-      setError(err.message || 'Błąd podczas usuwania urządzeń');
+      setError(translateError(err.message || 'Błąd podczas usuwania urządzeń'));
     } finally {
       setRefreshing(false);
     }

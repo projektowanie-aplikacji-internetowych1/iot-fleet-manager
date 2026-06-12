@@ -49,7 +49,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`Użytkownik o identyfikatorze ${id} nie został znaleziony`);
     }
 
     return user;
@@ -60,7 +60,7 @@ export class UsersService {
       where: { email: dto.email },
     });
     if (existing) {
-      throw new ConflictException('Email already exists');
+      throw new ConflictException('Podany adres e-mail już istnieje');
     }
 
     let targetOrgId = dto.organizationId || defaultOrgId;
@@ -69,7 +69,7 @@ export class UsersService {
       where: { id: targetOrgId },
     });
     if (!org) {
-      throw new BadRequestException('Target organization does not exist');
+      throw new BadRequestException('Docelowa organizacja nie istnieje');
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -96,7 +96,7 @@ export class UsersService {
       where: { id },
     });
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`Użytkownik o identyfikatorze ${id} nie został znaleziony`);
     }
 
     if (dto.email && dto.email !== user.email) {
@@ -104,7 +104,7 @@ export class UsersService {
         where: { email: dto.email },
       });
       if (existing) {
-        throw new ConflictException('Email already exists');
+        throw new ConflictException('Podany adres e-mail już istnieje');
       }
     }
 
@@ -121,7 +121,7 @@ export class UsersService {
           where: { id: dto.organizationId },
         });
         if (!org) {
-          throw new BadRequestException('Target organization does not exist');
+          throw new BadRequestException('Docelowa organizacja nie istnieje');
         }
         data.organizationId = dto.organizationId;
       }
@@ -150,7 +150,7 @@ export class UsersService {
       where: { id },
     });
     if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
+      throw new NotFoundException(`Użytkownik o identyfikatorze ${id} nie został znaleziony`);
     }
 
     if (user.role === Role.ADMIN) {
@@ -158,7 +158,7 @@ export class UsersService {
         where: { role: Role.ADMIN },
       });
       if (adminCount <= 1) {
-        throw new BadRequestException('Cannot delete the last Administrator in system');
+        throw new BadRequestException('Nie można usunąć jedynego Administratora w systemie');
       }
     }
 

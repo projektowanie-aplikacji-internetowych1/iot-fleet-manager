@@ -18,7 +18,7 @@ export class AuthGuard implements CanActivate {
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
-      throw new UnauthorizedException('Access token is missing');
+      throw new UnauthorizedException('Brak tokenu dostępu');
     }
 
     try {
@@ -30,7 +30,7 @@ export class AuthGuard implements CanActivate {
         organizationId: payload.organizationId,
       };
     } catch {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException('Niepoprawny lub wygasły token');
     }
 
     return true;

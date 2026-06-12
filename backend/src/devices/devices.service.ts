@@ -20,7 +20,7 @@ export class DevicesService {
       where: { id: targetOrgId },
     });
     if (!org) {
-      throw new BadRequestException('Target organization does not exist');
+      throw new BadRequestException('Docelowa organizacja nie istnieje');
     }
 
     return this.prisma.device.create({
@@ -67,7 +67,7 @@ export class DevicesService {
     });
 
     if (!device) {
-      throw new NotFoundException(`Device with ID ${id} not found`);
+      throw new NotFoundException(`Urządzenie o identyfikatorze ${id} nie zostało znalezione`);
     }
 
     return device;
@@ -78,7 +78,7 @@ export class DevicesService {
       where: { id },
     });
     if (!device) {
-      throw new NotFoundException(`Device with ID ${id} not found`);
+      throw new NotFoundException(`Urządzenie o identyfikatorze ${id} nie zostało znalezione`);
     }
 
     return this.prisma.device.delete({
@@ -91,7 +91,7 @@ export class DevicesService {
       where: { id },
     });
     if (!device) {
-      throw new NotFoundException(`Device with ID ${id} not found`);
+      throw new NotFoundException(`Urządzenie o identyfikatorze ${id} nie zostało znalezione`);
     }
 
     let targetOrgId = device.organizationId;
@@ -101,7 +101,7 @@ export class DevicesService {
         where: { id: targetOrgId },
       });
       if (!org) {
-        throw new BadRequestException('Target organization does not exist');
+        throw new BadRequestException('Docelowa organizacja nie istnieje');
       }
     }
 
@@ -135,7 +135,7 @@ export class DevicesService {
       where: { id },
     });
     if (!device) {
-      throw new NotFoundException(`Device with ID ${id} not found`);
+      throw new NotFoundException(`Urządzenie o identyfikatorze ${id} nie zostało znalezione`);
     }
 
     try {
@@ -201,6 +201,6 @@ export class DevicesService {
     });
 
     await Promise.allSettled(pollPromises);
-    return { message: 'All devices polled successfully' };
+    return { message: 'Wszystkie urządzenia zostały odpytane pomyślnie' };
   }
 }

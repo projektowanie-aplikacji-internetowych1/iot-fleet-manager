@@ -101,12 +101,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div>
           <div className="flex items-center gap-3 mb-10">
             <AppLogo size={20} />
-            <div>
-              <h1 className="text-lg font-bold tracking-wider uppercase text-white bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-                FleetPulse
-              </h1>
-              <span className="text-xs text-slate-500 font-medium">Panel Kontrolny</span>
-            </div>
+            <h1 className="text-lg font-bold tracking-wider uppercase text-white bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+              FleetPulse
+            </h1>
           </div>
 
           <nav className="space-y-2">

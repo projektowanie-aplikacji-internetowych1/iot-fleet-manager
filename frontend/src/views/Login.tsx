@@ -40,7 +40,7 @@ export const Login: React.FC = () => {
             FleetPulse
           </h1>
           <p className="text-xs text-slate-400 max-w-xs mt-2">
-            Niezawodne monitorowanie parametrów telemetrycznych i zarządzanie urządzeniami IoT w czasie rzeczywistym.
+            Monitorowanie parametrów i zarządzanie urządzeniami IoT w czasie rzeczywistym.
           </p>
           <h2 className="text-lg font-bold tracking-tight text-slate-300 mt-6">
             Logowanie do systemu

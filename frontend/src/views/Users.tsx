@@ -140,24 +140,42 @@ export const Users: React.FC = () => {
     setError(null);
     try {
       const otherIds = selectedIds.filter((id) => id !== currentUser?.id);
-      
+      let errors: string[] = [];
+
       if (otherIds.length > 0) {
-        await Promise.all(otherIds.map((id) => api.deleteUser(id)));
+        const results = await Promise.allSettled(otherIds.map((id) => api.deleteUser(id)));
+        results.forEach((res) => {
+          if (res.status === 'rejected') {
+            const rawMsg = res.reason?.message || res.reason || 'Błąd';
+            const translated = translateError(rawMsg);
+            errors.push(translated);
+          }
+        });
       }
 
       if (containsSelf) {
-        await api.deleteProfile();
-        alert('Twoje konto zostało usunięte.');
-        api.logout();
-        navigate('/login');
-        return;
+        try {
+          await api.deleteProfile();
+          alert('Twoje konto zostało usunięte.');
+          api.logout();
+          navigate('/login');
+          return;
+        } catch (selfErr: any) {
+          const rawMsg = selfErr.message || selfErr || 'Błąd';
+          const translated = translateError(rawMsg);
+          errors.push(`Nie udało się usunąć własnego konta: ${translated}`);
+        }
       }
 
-      setSelectedIds([]);
       const data = await api.getUsers();
       setUsers(data);
+      setSelectedIds([]);
+
+      if (errors.length > 0) {
+        setError(errors.join(', '));
+      }
     } catch (err: any) {
-      setError(err.message || 'Błąd podczas usuwania użytkowników');
+      setError(translateError(err.message || 'Błąd podczas usuwania użytkowników'));
     } finally {
       setLoading(false);
     }

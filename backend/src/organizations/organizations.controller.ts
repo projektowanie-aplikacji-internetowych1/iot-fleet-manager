@@ -43,7 +43,7 @@ export class OrganizationsController {
   @ApiResponse({ status: 404, description: 'Organization not found.' })
   async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     if (user.role !== Role.ADMIN && user.organizationId !== id) {
-      throw new ForbiddenException('You do not have access to this organization');
+      throw new ForbiddenException('Nie masz dostępu do tej organizacji');
     }
     return this.orgService.findOne(id);
   }

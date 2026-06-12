@@ -18,7 +18,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+      throw new ConflictException('Użytkownik o tym adresie e-mail już istnieje');
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -63,12 +63,12 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Niepoprawny e-mail lub hasło');
     }
 
     const passwordMatch = await bcrypt.compare(dto.password, user.password);
     if (!passwordMatch) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Niepoprawny e-mail lub hasło');
     }
 
     const token = this.generateToken(user.id, user.email, user.role, user.organizationId);

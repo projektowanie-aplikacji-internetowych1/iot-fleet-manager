@@ -12,7 +12,7 @@ export class OrganizationsService {
     });
 
     if (existing) {
-      throw new ConflictException('Organization with this name already exists');
+      throw new ConflictException('Organizacja o tej nazwie już istnieje');
     }
 
     return this.prisma.organization.create({
@@ -35,7 +35,7 @@ export class OrganizationsService {
     });
 
     if (!org) {
-      throw new NotFoundException(`Organization with ID ${id} not found`);
+      throw new NotFoundException(`Organizacja o identyfikatorze ${id} nie została znaleziona`);
     }
 
     return org;
@@ -46,7 +46,7 @@ export class OrganizationsService {
       where: { id },
     });
     if (!org) {
-      throw new NotFoundException(`Organization with ID ${id} not found`);
+      throw new NotFoundException(`Organizacja o identyfikatorze ${id} nie została znaleziona`);
     }
 
     return this.prisma.organization.delete({

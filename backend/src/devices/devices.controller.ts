@@ -51,7 +51,7 @@ export class DevicesController {
   async pollOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     const device = await this.devicesService.findOne(id);
     if (user.role !== Role.ADMIN && device.organizationId !== user.organizationId) {
-      throw new ForbiddenException('You do not have access to this device');
+      throw new ForbiddenException('Nie masz dostępu do tego urządzenia');
     }
     return this.devicesService.pollDeviceOnDemand(id);
   }
@@ -64,7 +64,7 @@ export class DevicesController {
   async findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     const device = await this.devicesService.findOne(id);
     if (user.role !== Role.ADMIN && device.organizationId !== user.organizationId) {
-      throw new ForbiddenException('You do not have access to this device');
+      throw new ForbiddenException('Nie masz dostępu do tego urządzenia');
     }
     return device;
   }
@@ -77,7 +77,7 @@ export class DevicesController {
   async findMetrics(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     const device = await this.devicesService.findOne(id);
     if (user.role !== Role.ADMIN && device.organizationId !== user.organizationId) {
-      throw new ForbiddenException('You do not have access to this device');
+      throw new ForbiddenException('Nie masz dostępu do tego urządzenia');
     }
     return this.devicesService.getDeviceMetrics(id);
   }
@@ -94,7 +94,7 @@ export class DevicesController {
   ) {
     const device = await this.devicesService.findOne(id);
     if (user.role !== Role.ADMIN && device.organizationId !== user.organizationId) {
-      throw new ForbiddenException('You do not have access to this device');
+      throw new ForbiddenException('Nie masz dostępu do tego urządzenia');
     }
     const isAdmin = user.role === Role.ADMIN;
     return this.devicesService.update(id, updateDeviceDto, user.organizationId, isAdmin);
@@ -108,7 +108,7 @@ export class DevicesController {
   async remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     const device = await this.devicesService.findOne(id);
     if (user.role !== Role.ADMIN && device.organizationId !== user.organizationId) {
-      throw new ForbiddenException('You do not have access to this device');
+      throw new ForbiddenException('Nie masz dostępu do tego urządzenia');
     }
     return this.devicesService.remove(id);
   }

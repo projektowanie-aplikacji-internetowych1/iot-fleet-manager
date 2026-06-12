@@ -183,7 +183,7 @@ Poniższa instrukcja prowadzi krok po kroku przez wszystkie kluczowe funkcjonaln
 
 ### Test 5: Szczegóły urządzenia i wykresy telemetryczne
 
-1. Jako administrator, na liście urządzeń kliknij ikonę oka (👁) przy urządzeniu `Drone Alpha`.
+1. Jako administrator, na liście urządzeń kliknij ikonę oka przy urządzeniu `Drone Alpha`.
 2. **Oczekiwany wynik:** Otwiera się widok szczegółów urządzenia zawierający:
    - Kartę informacyjną z szczegółami urządzenia (nazwa, IP, port, organizacja).
    - Konfigurację SNMPv3 (Auth: SHA, Privacy: AES, użytkownik: bootstrapUser).

@@ -47,7 +47,7 @@ export const Register: React.FC = () => {
             FleetPulse
           </h1>
           <p className="text-xs text-slate-400 max-w-xs mt-2">
-            Niezawodne monitorowanie parametrów telemetrycznych i zarządzanie urządzeniami IoT w czasie rzeczywistym.
+            Monitorowanie parametrów i zarządzanie urządzeniami IoT w czasie rzeczywistym.
           </p>
           <h2 className="text-lg font-bold tracking-tight text-slate-300 mt-6">
             Rejestracja w systemie
@@ -129,8 +129,8 @@ export const Register: React.FC = () => {
                   type="button"
                   onClick={() => setRole('USER')}
                   className={`py-2.5 px-4 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-200 ${role === 'USER'
-                      ? 'bg-brand-indigo/20 border-brand-indigo/60 text-brand-indigo font-bold'
-                      : 'bg-slate-900/20 border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'bg-brand-indigo/20 border-brand-indigo/60 text-brand-indigo font-bold'
+                    : 'bg-slate-900/20 border-slate-800 text-slate-400 hover:border-slate-700'
                     }`}
                 >
                   <User size={14} />
@@ -140,8 +140,8 @@ export const Register: React.FC = () => {
                   type="button"
                   onClick={() => setRole('ADMIN')}
                   className={`py-2.5 px-4 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-200 ${role === 'ADMIN'
-                      ? 'bg-brand-indigo/20 border-brand-indigo/60 text-brand-indigo font-bold'
-                      : 'bg-slate-900/20 border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'bg-brand-indigo/20 border-brand-indigo/60 text-brand-indigo font-bold'
+                    : 'bg-slate-900/20 border-slate-800 text-slate-400 hover:border-slate-700'
                     }`}
                 >
                   <Shield size={14} />
