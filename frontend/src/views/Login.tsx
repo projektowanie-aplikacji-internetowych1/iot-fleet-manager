@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
-import { Cpu, Mail, Lock, AlertTriangle } from 'lucide-react';
+import { Mail, Lock, AlertTriangle } from 'lucide-react';
+import { AppLogo } from '../components/AppLogo';
 
 import { translateError } from '../utils/errors';
 
@@ -34,15 +35,16 @@ export const Login: React.FC = () => {
 
       <div className="w-full max-w-md space-y-8 relative">
         <div className="flex flex-col items-center text-center">
-          <div className="bg-brand-indigo/10 p-3.5 rounded-2xl border border-brand-indigo/20 mb-4">
-            <Cpu className="text-brand-indigo" size={32} />
-          </div>
-          <h2 className="text-2xl font-bold tracking-tight text-white">
+          <AppLogo size={32} />
+          <h1 className="text-3xl font-extrabold tracking-wider text-white bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mt-4">
+            FleetPulse
+          </h1>
+          <p className="text-xs text-slate-400 max-w-xs mt-2">
+            Niezawodne monitorowanie parametrów telemetrycznych i zarządzanie urządzeniami IoT w czasie rzeczywistym.
+          </p>
+          <h2 className="text-lg font-bold tracking-tight text-slate-300 mt-6">
             Logowanie do systemu
           </h2>
-          <p className="text-xs text-slate-400 mt-1.5">
-            Zaloguj się, aby zarządzać telemetrycznymi parametrami floty
-          </p>
         </div>
 
         <div className="glass-panel p-8 rounded-3xl">
@@ -109,7 +111,7 @@ export const Login: React.FC = () => {
               to="/register"
               className="text-brand-indigo hover:text-indigo-400 font-semibold transition-colors duration-150"
             >
-              Utwórz konto floty
+              Utwórz konto
             </Link>
           </p>
         </div>

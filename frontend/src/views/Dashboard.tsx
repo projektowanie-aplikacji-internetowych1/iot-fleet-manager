@@ -130,7 +130,7 @@ export const Dashboard: React.FC = () => {
     <div className="space-y-8 relative">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-2xl font-extrabold text-white tracking-tight">Status Telemetryczny Floty</h3>
+          <h3 className="text-2xl font-extrabold text-white tracking-tight">Monitorowanie Stanu Urządzeń</h3>
           <p className="text-slate-400 text-xs mt-1">Zagregowane podsumowanie odczytów w czasie rzeczywistym</p>
         </div>
         <button

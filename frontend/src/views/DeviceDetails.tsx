@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { ResponsiveContainer, AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { ArrowLeft, RefreshCw, Cpu, Server, Key, Calendar, Activity, Battery, Thermometer, Clock, Wifi, HardDrive } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Cpu, Server, Key, Calendar, Activity, Battery, Thermometer, Clock, Wifi, HardDrive, Edit, Trash2, X, AlertTriangle } from 'lucide-react';
 
 interface MetricPoint {
   id: string;
@@ -31,11 +31,29 @@ interface DeviceDetails {
 
 export const DeviceDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [device, setDevice] = useState<DeviceDetails | null>(null);
   const [metrics, setMetrics] = useState<MetricPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const currentUser = api.getCurrentUser();
+  const [newDevice, setNewDevice] = useState({
+    name: '',
+    ipAddress: '',
+    port: 161,
+    snmpUsername: 'bootstrapUser',
+    authProtocol: 'SHA',
+    authPasswordHash: '',
+    privacyProtocol: 'AES',
+    privacyPasswordHash: '',
+    organizationId: '',
+  });
 
   const fetchData = async (isSilent = false, forcePoll = false) => {
     if (!id) return;
@@ -63,6 +81,10 @@ export const DeviceDetails: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+
+    if (currentUser?.role === 'ADMIN') {
+      api.getOrganizations().then(setOrganizations).catch(console.error);
+    }
 
     const interval = setInterval(() => {
       fetchData(true);
@@ -126,6 +148,83 @@ export const DeviceDetails: React.FC = () => {
     );
   }
 
+  const handleOpenEdit = () => {
+    if (!device) return;
+    setNewDevice({
+      name: device.name,
+      ipAddress: device.ipAddress,
+      port: device.port,
+      snmpUsername: device.snmpUsername,
+      authProtocol: device.authProtocol,
+      authPasswordHash: '',
+      privacyProtocol: device.privacyProtocol,
+      privacyPasswordHash: '',
+      organizationId: device.organizationId,
+    });
+    setModalError(null);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveDevice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!device) return;
+    setModalError(null);
+    setModalLoading(true);
+
+    try {
+      const payload: any = {
+        name: newDevice.name,
+        ipAddress: newDevice.ipAddress,
+        port: Number(newDevice.port),
+        snmpUsername: newDevice.snmpUsername,
+        authProtocol: newDevice.authProtocol,
+        privacyProtocol: newDevice.privacyProtocol,
+      };
+
+      if (newDevice.authProtocol !== 'NONE') {
+        if (newDevice.authPasswordHash) {
+          payload.authPasswordHash = newDevice.authPasswordHash;
+        }
+      } else {
+        payload.authPasswordHash = null;
+      }
+
+      if (newDevice.privacyProtocol !== 'NONE') {
+        if (newDevice.privacyPasswordHash) {
+          payload.privacyPasswordHash = newDevice.privacyPasswordHash;
+        }
+      } else {
+        payload.privacyPasswordHash = null;
+      }
+
+      if (currentUser?.role === 'ADMIN' && newDevice.organizationId) {
+        payload.organizationId = newDevice.organizationId;
+      }
+
+      await api.updateDevice(device.id, payload);
+      setIsModalOpen(false);
+      fetchData();
+    } catch (err: any) {
+      setModalError(err.message || 'Nie udało się zapisać urządzenia');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleDeleteDevice = async () => {
+    if (!device) return;
+    if (!window.confirm(`Czy na pewno chcesz usunąć urządzenie "${device.name}"?`)) {
+      return;
+    }
+
+    try {
+      await api.deleteDevice(device.id);
+      navigate('/devices');
+    } catch (err: any) {
+      alert(err.message || 'Błąd podczas usuwania urządzenia');
+    }
+  };
+
   const latestMetric = metrics[metrics.length - 1];
   const currentStatus = latestMetric ? latestMetric.status : 'OFFLINE';
   const currentUptime = latestMetric ? latestMetric.uptime : 0;
@@ -139,7 +238,7 @@ export const DeviceDetails: React.FC = () => {
     'Bateria (%)': m.battery,
     'Temperatura (°C)': m.temperature,
     'Czas Uptime (s)': m.uptime,
-    'Sygnał (dBm)': m.signalStrength ?? -100,
+    'Sygnał (dBm)': m.status === 'OFFLINE' ? null : (m.signalStrength ?? -100),
     'Zużycie RAM (%)': m.memoryUsage ?? 0,
   }));
 
@@ -175,7 +274,7 @@ export const DeviceDetails: React.FC = () => {
         <div className="flex items-center gap-4">
           <Link
             to="/devices"
-            className="p-2.5 bg-slate-900/50 hover:bg-slate-900 border border-slate-855 hover:border-slate-800 text-slate-400 hover:text-white rounded-xl transition-all"
+            className="p-2.5 bg-slate-900/50 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-xl transition-all"
           >
             <ArrowLeft size={16} />
           </Link>
@@ -185,14 +284,32 @@ export const DeviceDetails: React.FC = () => {
           </div>
         </div>
 
-        <button
-          onClick={() => fetchData(true, true)}
-          disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold rounded-xl text-slate-300 transition-all cursor-pointer"
-        >
-          <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-          {refreshing ? 'Aktualizowanie...' : 'Odśwież dane'}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleOpenEdit}
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold rounded-xl text-slate-300 transition-all cursor-pointer"
+          >
+            <Edit size={14} className="text-brand-indigo" />
+            <span>Edytuj</span>
+          </button>
+
+          <button
+            onClick={handleDeleteDevice}
+            className="flex items-center gap-1.5 px-4 py-2 bg-rose-500/10 hover:bg-rose-500/25 border border-rose-500/20 hover:border-rose-500/40 text-xs font-bold rounded-xl text-rose-400 transition-all cursor-pointer"
+          >
+            <Trash2 size={14} />
+            <span>Usuń</span>
+          </button>
+
+          <button
+            onClick={() => fetchData(true, true)}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold rounded-xl text-slate-300 transition-all cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+            {refreshing ? 'Aktualizowanie...' : 'Odśwież dane'}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-5">
@@ -259,7 +376,7 @@ export const DeviceDetails: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="glass-panel p-6 rounded-2xl space-y-6 lg:col-span-1">
+        <div className="glass-panel p-6 rounded-2xl space-y-6 lg:col-span-1 h-[350px]">
           <h4 className="text-sm font-extrabold text-white uppercase tracking-wider border-b border-slate-900 pb-3">Konfiguracja Połączenia</h4>
 
           <div className="space-y-4 text-xs">
@@ -509,6 +626,181 @@ export const DeviceDetails: React.FC = () => {
           )}
         </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative">
+            <div className="flex justify-between items-center px-6 py-4.5 border-b border-slate-900 bg-slate-900/20">
+              <div className="flex items-center gap-2 text-brand-indigo font-bold">
+                <Edit size={18} />
+                <span>Edytuj Urządzenie SNMPv3</span>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-500 hover:text-slate-200 p-1 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveDevice} className="p-6 space-y-6">
+              {modalError && (
+                <div className="bg-rose-500/10 border border-rose-500/20 px-4 py-3 rounded-2xl flex items-start gap-3 text-rose-400 text-xs">
+                  <AlertTriangle className="shrink-0 mt-0.5" size={16} />
+                  <span>{modalError}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-300">Nazwa urządzenia</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="np. Drone Delta"
+                    value={newDevice.name}
+                    onChange={(e) => setNewDevice((prev) => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 bg-slate-900/30 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-brand-indigo/50 focus:ring-1 focus:ring-brand-indigo/20 transition-all"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-300">Adres IP / Host</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="np. mock-device-3"
+                    value={newDevice.ipAddress}
+                    onChange={(e) => setNewDevice((prev) => ({ ...prev, ipAddress: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 bg-slate-900/30 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-brand-indigo/50 focus:ring-1 focus:ring-brand-indigo/20 transition-all"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-300">Port UDP</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    max={65535}
+                    value={newDevice.port}
+                    onChange={(e) => setNewDevice((prev) => ({ ...prev, port: Number(e.target.value) }))}
+                    className="w-full px-3.5 py-2.5 bg-slate-900/30 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-indigo/50 focus:ring-1 focus:ring-brand-indigo/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              {currentUser?.role === 'ADMIN' && (
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-300 block">Wybierz organizację</label>
+                  <select
+                    value={newDevice.organizationId}
+                    onChange={(e) => setNewDevice((prev) => ({ ...prev, organizationId: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 bg-slate-900/30 border border-slate-800 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-brand-indigo/50 cursor-pointer"
+                  >
+                    {organizations.map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="p-5 bg-slate-900/10 rounded-2xl border border-slate-900/60 space-y-4">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
+                  <Key size={14} className="text-brand-indigo" />
+                  <span>Poświadczenia Bezpieczeństwa SNMPv3</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-semibold text-slate-400">Security Username</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="bootstrapUser"
+                      value={newDevice.snmpUsername}
+                      onChange={(e) => setNewDevice((prev) => ({ ...prev, snmpUsername: e.target.value }))}
+                      className="w-full px-3.5 py-2 bg-slate-950/45 border border-slate-850 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-brand-indigo/50"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-semibold text-slate-400">Protokół autoryzacji</label>
+                    <select
+                      value={newDevice.authProtocol}
+                      onChange={(e) => setNewDevice((prev) => ({ ...prev, authProtocol: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-950/45 border border-slate-850 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-brand-indigo/50"
+                    >
+                      <option value="NONE">NONE</option>
+                      <option value="MD5">MD5</option>
+                      <option value="SHA">SHA</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-semibold text-slate-400">Klucz autoryzacji</label>
+                    <input
+                      type="password"
+                      disabled={newDevice.authProtocol === 'NONE'}
+                      placeholder="Wpisz klucz..."
+                      value={newDevice.authPasswordHash}
+                      onChange={(e) => setNewDevice((prev) => ({ ...prev, authPasswordHash: e.target.value }))}
+                      className="w-full px-3.5 py-2 bg-slate-950/45 border border-slate-850 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-brand-indigo/50 disabled:opacity-30"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-semibold text-slate-400">Protokół prywatności (Szyfr)</label>
+                    <select
+                      value={newDevice.privacyProtocol}
+                      disabled={newDevice.authProtocol === 'NONE'}
+                      onChange={(e) => setNewDevice((prev) => ({ ...prev, privacyProtocol: e.target.value }))}
+                      className="w-full px-3 py-2 bg-slate-950/45 border border-slate-850 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-brand-indigo/50 disabled:opacity-30"
+                    >
+                      <option value="NONE">NONE</option>
+                      <option value="DES">DES</option>
+                      <option value="AES">AES</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-semibold text-slate-400">Klucz prywatności (Szyfru)</label>
+                    <input
+                      type="password"
+                      disabled={newDevice.privacyProtocol === 'NONE' || newDevice.authProtocol === 'NONE'}
+                      placeholder="Wpisz klucz..."
+                      value={newDevice.privacyPasswordHash}
+                      onChange={(e) => setNewDevice((prev) => ({ ...prev, privacyPasswordHash: e.target.value }))}
+                      className="w-full px-3.5 py-2 bg-slate-950/45 border border-slate-850 rounded-lg text-xs text-slate-300 focus:outline-none focus:border-brand-indigo/50 disabled:opacity-30"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-900">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-5 py-2.5 bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold rounded-xl text-slate-300 cursor-pointer"
+                >
+                  Anuluj
+                </button>
+                <button
+                  type="submit"
+                  disabled={modalLoading}
+                  className="px-5 py-2.5 bg-gradient-to-r from-brand-indigo to-indigo-600 hover:from-brand-indigo hover:to-indigo-500 text-white text-xs font-bold rounded-xl cursor-pointer disabled:opacity-50"
+                >
+                  {modalLoading ? 'Zapisywanie...' : 'Zapisz'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -57,6 +57,12 @@ export const Users: React.FC = () => {
     fetchData();
   }, []);
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [searchQuery]);
+
   const handleOpenCreate = () => {
     setEditingUser(null);
     setEmail('');
@@ -98,10 +104,62 @@ export const Users: React.FC = () => {
       } else {
         await api.deleteUser(id);
         setUsers((prev) => prev.filter((u) => u.id !== id));
+        setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== id));
       }
     } catch (err: any) {
       const translated = translateError(err.message || 'Błąd podczas usuwania użytkownika');
       alert(translated);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    const containsSelf = currentUser && selectedIds.includes(currentUser.id);
+
+    let promptMessage = '';
+    if (selectedIds.length === users.length) {
+      promptMessage = 'Czy na pewno chcesz usunąć wszystkich użytkowników?';
+    } else {
+      promptMessage = `Czy na pewno chcesz usunąć ${selectedIds.length} ${
+        selectedIds.length === 1
+          ? 'użytkownika'
+          : selectedIds.length >= 2 && selectedIds.length <= 4
+          ? 'użytkowników'
+          : 'użytkowników'
+      }?`;
+    }
+
+    if (containsSelf) {
+      promptMessage += '\n\nUwaga: Zaznaczono również Twoje własne konto. Po usunięciu pozostałych użytkowników Twoje konto zostanie skasowane, a Ty zostaniesz wylogowany.';
+    }
+
+    if (!window.confirm(promptMessage)) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const otherIds = selectedIds.filter((id) => id !== currentUser?.id);
+      
+      if (otherIds.length > 0) {
+        await Promise.all(otherIds.map((id) => api.deleteUser(id)));
+      }
+
+      if (containsSelf) {
+        await api.deleteProfile();
+        alert('Twoje konto zostało usunięte.');
+        api.logout();
+        navigate('/login');
+        return;
+      }
+
+      setSelectedIds([]);
+      const data = await api.getUsers();
+      setUsers(data);
+    } catch (err: any) {
+      setError(err.message || 'Błąd podczas usuwania użytkowników');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -190,13 +248,25 @@ export const Users: React.FC = () => {
           />
         </div>
 
-        <button
-          onClick={handleOpenCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-brand-indigo to-indigo-600 hover:from-brand-indigo hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-indigo/15 hover:shadow-brand-indigo/35 transition-all duration-200 cursor-pointer"
-        >
-          <Plus size={16} />
-          Dodaj użytkownika
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 hover:border-rose-500/40 text-rose-450 hover:text-rose-400 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-rose-500/5 animate-pulse"
+            >
+              <Trash2 size={14} />
+              <span>Usuń zaznaczone ({selectedIds.length})</span>
+            </button>
+          )}
+
+          <button
+            onClick={handleOpenCreate}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-brand-indigo to-indigo-600 hover:from-brand-indigo hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-indigo/15 hover:shadow-brand-indigo/35 transition-all duration-200 cursor-pointer"
+          >
+            <Plus size={16} />
+            Dodaj użytkownika
+          </button>
+        </div>
       </div>
 
       <div className="glass-panel rounded-2xl overflow-hidden border border-slate-900/60">
@@ -204,6 +274,20 @@ export const Users: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-900/80 bg-slate-900/10">
+                <th className="pl-6 py-4.5 w-10">
+                  <input
+                    type="checkbox"
+                    checked={filteredUsers.length > 0 && selectedIds.length === filteredUsers.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(filteredUsers.map((u) => u.id));
+                      } else {
+                        setSelectedIds([]);
+                      }
+                    }}
+                    className="rounded border-slate-800 bg-slate-950 text-brand-indigo focus:ring-brand-indigo/30 w-4 h-4 cursor-pointer"
+                  />
+                </th>
                 <th className="px-6 py-4.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">Użytkownik</th>
                 <th className="px-6 py-4.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">Rola</th>
                 <th className="px-6 py-4.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">Organizacja</th>
@@ -214,7 +298,7 @@ export const Users: React.FC = () => {
             <tbody className="divide-y divide-slate-900/40 text-sm">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500 text-sm">
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500 text-sm">
                     Brak użytkowników spełniających kryteria.
                   </td>
                 </tr>
@@ -228,6 +312,20 @@ export const Users: React.FC = () => {
 
                   return (
                     <tr key={user.id} className="hover:bg-slate-900/15 transition-colors">
+                      <td className="pl-6 py-4 w-10">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(user.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedIds((prev) => [...prev, user.id]);
+                            } else {
+                              setSelectedIds((prev) => prev.filter((id) => id !== user.id));
+                            }
+                          }}
+                          className="rounded border-slate-800 bg-slate-950 text-brand-indigo focus:ring-brand-indigo/30 w-4 h-4 cursor-pointer"
+                        />
+                      </td>
                       <td className="px-6 py-4 font-semibold text-slate-100">{user.email}</td>
                       <td className="px-6 py-4">
                         {user.role === 'ADMIN' ? (

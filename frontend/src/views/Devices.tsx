@@ -49,6 +49,8 @@ export const Devices: React.FC = () => {
     organizationId: '',
   });
 
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   const fetchDevices = async () => {
     try {
       const data = await api.getDevices();
@@ -85,6 +87,10 @@ export const Devices: React.FC = () => {
     fetchDevices();
   }, []);
 
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [statusFilter, searchQuery]);
+
   const handleDelete = async (id: string, name: string) => {
     if (!window.confirm(`Czy na pewno chcesz usunąć urządzenie "${name}"?`)) {
       return;
@@ -93,8 +99,41 @@ export const Devices: React.FC = () => {
     try {
       await api.deleteDevice(id);
       setDevices((prev) => prev.filter((d) => d.id !== id));
+      setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== id));
     } catch (err: any) {
       alert(err.message || 'Błąd podczas usuwania urządzenia');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+
+    let promptMessage = '';
+    if (selectedIds.length === devices.length) {
+      promptMessage = 'Czy na pewno chcesz usunąć wszystkie urządzenia?';
+    } else {
+      promptMessage = `Czy na pewno chcesz usunąć ${selectedIds.length} ${
+        selectedIds.length === 1
+          ? 'urządzenie'
+          : selectedIds.length >= 2 && selectedIds.length <= 4
+          ? 'urządzenia'
+          : 'urządzeń'
+      }?`;
+    }
+
+    if (!window.confirm(promptMessage)) return;
+
+    setRefreshing(true);
+    setError(null);
+    try {
+      await Promise.all(selectedIds.map((id) => api.deleteDevice(id)));
+      setSelectedIds([]);
+      const data = await api.getDevices();
+      setDevices(data);
+    } catch (err: any) {
+      setError(err.message || 'Błąd podczas usuwania urządzeń');
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -210,7 +249,7 @@ export const Devices: React.FC = () => {
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-            SPRAWNY
+            ONLINE
           </span>
         );
       case 'WARNING':
@@ -288,6 +327,16 @@ export const Devices: React.FC = () => {
             {refreshing ? 'Odświeżanie...' : 'Odśwież'}
           </button>
 
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/25 hover:border-rose-500/40 text-rose-450 hover:text-rose-400 text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer shadow-lg shadow-rose-500/5 animate-pulse"
+            >
+              <Trash2 size={14} />
+              <span>Usuń zaznaczone ({selectedIds.length})</span>
+            </button>
+          )}
+
           <button
             onClick={handleOpenCreate}
             className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-brand-indigo to-indigo-600 hover:from-brand-indigo hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-indigo/15 hover:shadow-brand-indigo/35 transition-all duration-200 cursor-pointer"
@@ -303,6 +352,20 @@ export const Devices: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-900/80 bg-slate-900/10">
+                <th className="pl-6 py-4.5 w-10">
+                  <input
+                    type="checkbox"
+                    checked={filteredDevices.length > 0 && selectedIds.length === filteredDevices.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(filteredDevices.map((d) => d.id));
+                      } else {
+                        setSelectedIds([]);
+                      }
+                    }}
+                    className="rounded border-slate-800 bg-slate-950 text-brand-indigo focus:ring-brand-indigo/30 w-4 h-4 cursor-pointer"
+                  />
+                </th>
                 <th className="px-6 py-4.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">Urządzenie</th>
                 <th className="px-6 py-4.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">Adres IP & Port</th>
                 <th className="px-6 py-4.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">Organizacja</th>
@@ -314,7 +377,7 @@ export const Devices: React.FC = () => {
             <tbody className="divide-y divide-slate-900/40 text-sm">
               {filteredDevices.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500 text-sm">
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500 text-sm">
                     Brak urządzeń spełniających kryteria wyszukiwania.
                   </td>
                 </tr>
@@ -326,6 +389,20 @@ export const Devices: React.FC = () => {
 
                   return (
                     <tr key={device.id} className="hover:bg-slate-900/15 transition-colors">
+                      <td className="pl-6 py-4 w-10">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(device.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedIds((prev) => [...prev, device.id]);
+                            } else {
+                              setSelectedIds((prev) => prev.filter((id) => id !== device.id));
+                            }
+                          }}
+                          className="rounded border-slate-800 bg-slate-950 text-brand-indigo focus:ring-brand-indigo/30 w-4 h-4 cursor-pointer"
+                        />
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className={`p-2.5 rounded-xl border ${status === 'ONLINE'
@@ -528,7 +605,6 @@ export const Devices: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-1"></div>
                   <div className="space-y-2">
                     <label className="text-[11px] font-semibold text-slate-400">Protokół prywatności (Szyfr)</label>
                     <select

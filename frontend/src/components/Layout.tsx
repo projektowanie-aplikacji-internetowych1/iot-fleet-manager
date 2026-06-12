@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { LayoutDashboard, Cpu, LogOut, Shield, Building, User } from 'lucide-react';
+import { AppLogo } from './AppLogo';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -32,7 +33,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       icon: <LayoutDashboard size={20} />,
     },
     {
-      name: 'Urządzenia Fleet',
+      name: 'Urządzenia',
       path: '/devices',
       icon: <Cpu size={20} />,
     },
@@ -59,13 +60,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (path === '/dashboard') {
       return {
         title: 'Panel Główny',
-        desc: 'Przegląd telemetryczny i agregaty stanu floty urządzeń',
+        desc: 'Bieżący stan podłączonych urządzeń, poziom baterii i status łączności w organizacji.',
       };
     }
     if (path === '/devices') {
       return {
-        title: 'Zarządzanie Flotą Urządzeń',
-        desc: 'Konfiguracja, dodawanie, usuwanie i podgląd szczegółów urządzeń IoT',
+        title: 'Urządzenia w Sieci',
+        desc: 'Konfiguracja, monitorowanie oraz spis urządzeń telemetrycznych w organizacji.',
       };
     }
     if (path === '/users') {
@@ -99,14 +100,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <aside className="w-64 glass-panel border-r border-slate-900 flex flex-col justify-between p-6">
         <div>
           <div className="flex items-center gap-3 mb-10">
-            <div className="bg-brand-indigo/10 p-2 rounded-xl border border-brand-indigo/30">
-              <Cpu className="text-brand-indigo animate-pulse" size={24} />
-            </div>
+            <AppLogo size={20} />
             <div>
               <h1 className="text-lg font-bold tracking-wider uppercase text-white bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
-                Fleet IoT
+                FleetPulse
               </h1>
-              <span className="text-xs text-slate-500 font-medium">Control Manager</span>
+              <span className="text-xs text-slate-500 font-medium">Panel Kontrolny</span>
             </div>
           </div>
 
