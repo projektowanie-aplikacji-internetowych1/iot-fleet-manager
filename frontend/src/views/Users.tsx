@@ -72,7 +72,7 @@ export const Users: React.FC = () => {
   const handleOpenEdit = (user: UserItem) => {
     setEditingUser(user);
     setEmail(user.email);
-    setPassword(''); // keep blank if unchanged
+    setPassword('');
     setRole(user.role);
     setOrganizationId(user.organizationId || (organizations[0]?.id || ''));
     setModalError(null);
@@ -80,7 +80,7 @@ export const Users: React.FC = () => {
   };
 
   const handleDelete = async (id: string, userEmail: string) => {
-    const isSelf = currentUser && currentUser.email === userEmail;
+    const isSelf = currentUser && currentUser.id === id;
     const confirmMsg = isSelf
       ? 'Czy na pewno chcesz usunąć swoje własne konto? Ta operacja jest nieodwracalna, a Twoje dane zostaną bezpowrotnie skasowane.'
       : `Czy na pewno chcesz usunąć użytkownika "${userEmail}"?`;
@@ -125,6 +125,15 @@ export const Users: React.FC = () => {
           payload.password = password;
         }
         await api.updateUser(editingUser.id, payload);
+
+        if (currentUser && editingUser.id === currentUser.id) {
+          const updatedUserInfo = { ...currentUser, email: payload.email };
+          if (payload.role) {
+            updatedUserInfo.role = payload.role;
+          }
+          localStorage.setItem('user_info', JSON.stringify(updatedUserInfo));
+          window.dispatchEvent(new Event('profile_updated'));
+        }
       } else {
         if (!password || password.length < 6) {
           throw new Error('Hasło jest wymagane i musi mieć co najmniej 6 znaków');
