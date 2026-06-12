@@ -172,10 +172,20 @@ export const api = {
     });
   },
 
+  async getProfile(): Promise<any> {
+    return apiFetch('/users/me');
+  },
+
   async updateProfile(profileData: any): Promise<any> {
     return apiFetch('/users/me', {
       method: 'PUT',
       body: JSON.stringify(profileData),
+    });
+  },
+
+  async deleteProfile(): Promise<any> {
+    return apiFetch('/users/me', {
+      method: 'DELETE',
     });
   },
 

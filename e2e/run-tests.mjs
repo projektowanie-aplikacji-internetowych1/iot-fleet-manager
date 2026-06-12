@@ -504,6 +504,25 @@ async function testUsers() {
   // Admin CRUD - Usunięcie użytkownika
   const deleteRes = await request('DELETE', `/users/${createdUserId}`, null, admin.token);
   assert(deleteRes.status === 200, 'Admin: DELETE /users/:id (usunięcie konta) zwraca 200');
+
+  // Samousunięcie
+  const selfDeleteEmail = `self_delete_user_${Date.now()}@iot.com`;
+  const registerSelfRes = await request('POST', '/auth/register', {
+    email: selfDeleteEmail,
+    password: 'password123',
+    organizationName: `Org Self Delete ${Date.now()}`
+  });
+  assert(registerSelfRes.status === 201, 'Rejestracja tymczasowego użytkownika do samousunięcia');
+  const selfToken = registerSelfRes.data.accessToken;
+
+  const selfDeleteRes = await request('DELETE', '/users/me', null, selfToken);
+  assert(selfDeleteRes.status === 200, 'Użytkownik: DELETE /users/me (samousunięcie) zwraca 200');
+
+  const getProfileAfterDelete = await request('GET', '/users/me', null, selfToken);
+  assert(getProfileAfterDelete.status === 404 || getProfileAfterDelete.status === 401, 'Próba pobrania profilu usuniętego użytkownika zwraca 404 Not Found lub 401');
+
+  const loginAfterDelete = await request('POST', '/auth/login', { email: selfDeleteEmail, password: 'password123' });
+  assert(loginAfterDelete.status === 401 || loginAfterDelete.status === 400, 'Próba logowania na usunięte konto zwraca błąd autoryzacji');
 }
 
 async function testOnDemandPolling() {

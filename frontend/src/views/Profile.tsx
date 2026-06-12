@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { User, Shield, Key, AlertTriangle, CheckCircle, RefreshCw, Building } from 'lucide-react';
+import { User, Shield, Key, AlertTriangle, CheckCircle, RefreshCw, Building, Trash2 } from 'lucide-react';
 import { translateError } from '../utils/errors';
 
 export const Profile: React.FC = () => {
@@ -14,19 +14,11 @@ export const Profile: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
 
-  const apiUrl = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
+
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch(`${apiUrl}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        }
-      });
-      if (!response.ok) {
-        throw new Error('Nie udało się pobrać danych profilu');
-      }
-      const data = await response.json();
+      const data = await api.getProfile();
       setProfile(data);
       setEmail(data.email);
     } catch (err: any) {
@@ -79,6 +71,20 @@ export const Profile: React.FC = () => {
       setError(translated);
     } finally {
       setSubmitLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm('Czy na pewno chcesz usunąć swoje konto? Ta operacja jest nieodwracalna, a Twoje dane zostaną bezpowrotnie skasowane.')) {
+      return;
+    }
+
+    try {
+      await api.deleteProfile();
+      alert('Konto zostało pomyślnie usunięte.');
+      api.logout();
+    } catch (err: any) {
+      setError(err.message || 'Nie udało się usunąć konta');
     }
   };
 
@@ -198,6 +204,32 @@ export const Profile: React.FC = () => {
             </button>
           </div>
         </form>
+      </div>
+
+      <div className="glass-panel p-6 rounded-3xl border border-rose-500/10 space-y-6">
+        <div className="flex items-center gap-4 pb-6 border-b border-rose-500/10">
+          <div className="bg-rose-500/10 p-3 rounded-2xl border border-rose-500/25 text-rose-400">
+            <Trash2 size={28} />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-white">Usuń konto</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Trwałe usunięcie Twojego konta użytkownika w systemie</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <p className="text-xs text-slate-400 max-w-md">
+            Po usunięciu konta zostaniesz wylogowany. Twój adres e-mail zostanie zwolniony i będzie można go użyć do ponownej rejestracji.
+          </p>
+          <button
+            type="button"
+            onClick={handleDeleteAccount}
+            className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 hover:bg-rose-500 text-rose-400 hover:text-white text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer"
+          >
+            <Trash2 size={14} />
+            Usuń konto
+          </button>
+        </div>
       </div>
     </div>
   );
