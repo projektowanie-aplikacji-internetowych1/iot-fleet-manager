@@ -1,6 +1,6 @@
 # FleetPulse - IoT Fleet Manager
 
-System klasy **FleetPulse** (IoT Fleet Manager) umożliwiający monitorowanie urządzeń IoT za pośrednictwem protokołu **SNMPv3** z uwierzytelnianiem SHA i szyfrowaniem AES.
+System klasy **FleetPulse** umożliwiający monitorowanie urządzeń IoT za pośrednictwem protokołu **SNMPv3** z uwierzytelnianiem SHA i szyfrowaniem AES.
 
 Projekt został zaprojektowany z architekturą izolacji najemców, w której użytkownicy są przypisywani do konkretnych organizacji, a administratorzy mają globalny wgląd w całą flotę.
 
