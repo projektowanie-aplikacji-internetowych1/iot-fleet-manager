@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { ResponsiveContainer, AreaChart, Area, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { ArrowLeft, RefreshCw, Cpu, Server, Key, Calendar, Activity, Battery, Thermometer, Clock, Wifi, HardDrive, Edit, Trash2, X, AlertTriangle } from 'lucide-react';
@@ -43,6 +43,15 @@ export const DeviceDetails: React.FC = () => {
   const [modalError, setModalError] = useState<string | null>(null);
   const [organizations, setOrganizations] = useState<any[]>([]);
   const currentUser = api.getCurrentUser();
+
+  const handleBack = () => {
+    if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/devices');
+    }
+  };
+
   const [newDevice, setNewDevice] = useState({
     name: '',
     ipAddress: '',
@@ -130,13 +139,13 @@ export const DeviceDetails: React.FC = () => {
         <h3 className="font-bold text-lg text-white">Błąd wczytywania</h3>
         <p className="text-sm">{error || 'Urządzenie nie zostało znalezione'}</p>
         <div className="flex gap-3">
-          <Link
-            to="/devices"
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-300 hover:text-white"
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-300 hover:text-white cursor-pointer"
           >
             <ArrowLeft size={14} />
             Powrót
-          </Link>
+          </button>
           <button
             onClick={() => fetchData()}
             className="px-4 py-2 bg-brand-indigo hover:bg-indigo-600 text-xs font-semibold rounded-xl text-white cursor-pointer"
@@ -272,12 +281,12 @@ export const DeviceDetails: React.FC = () => {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
-          <Link
-            to="/devices"
-            className="p-2.5 bg-slate-900/50 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-xl transition-all"
+          <button
+            onClick={handleBack}
+            className="p-2.5 bg-slate-900/50 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white rounded-xl transition-all cursor-pointer"
           >
             <ArrowLeft size={16} />
-          </Link>
+          </button>
           <div>
             <h3 className="text-2xl font-extrabold text-white tracking-tight">{device.name}</h3>
             <p className="text-slate-400 text-xs mt-0.5">Szczegółowa analityka telemetryczna urządzenia IoT</p>

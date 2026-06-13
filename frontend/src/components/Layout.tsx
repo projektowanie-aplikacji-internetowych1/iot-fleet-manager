@@ -170,8 +170,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900">
-        <header className="py-5 px-8 flex justify-between items-center border-b border-slate-900/60 bg-slate-950/45 backdrop-blur-md">
+      <main className="flex-1 flex flex-col min-h-screen overflow-y-auto bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 relative overflow-hidden">
+        {/* Background neon blobs */}
+        <div className="absolute w-[500px] h-[500px] bg-brand-indigo/5 rounded-full blur-[120px] top-1/4 -right-48 pointer-events-none"></div>
+        <div className="absolute w-[400px] h-[400px] bg-brand-cyan/5 rounded-full blur-[100px] bottom-10 -left-20 pointer-events-none"></div>
+
+        <header className="py-5 px-8 flex justify-between items-center border-b border-slate-900/60 bg-slate-950/45 backdrop-blur-md relative z-10">
           <div>
             <h2 className="text-xl font-bold text-white">
               {header.title}
@@ -186,7 +190,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </header>
 
-        <div className="p-8 flex-1">{children}</div>
+        <div key={location.pathname} className="p-8 flex-1 relative z-10 animate-fade-in">
+          {children}
+        </div>
       </main>
     </div>
   );

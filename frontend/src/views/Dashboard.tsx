@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Cpu, AlertCircle, BatteryCharging, AlertTriangle, ShieldCheck, Activity, RefreshCw, Wifi, HardDrive } from 'lucide-react';
+import { Cpu, AlertCircle, BatteryCharging, AlertTriangle, ShieldCheck, Activity, RefreshCw, Wifi, HardDrive, Eye } from 'lucide-react';
 
 interface BatteryData {
   averageBattery: number;
@@ -385,15 +386,24 @@ export const Dashboard: React.FC = () => {
             {batteryData.devices
               .filter(d => d.battery < 30)
               .map(d => (
-                <div key={d.id} className="bg-rose-950/20 border border-rose-500/10 p-4 rounded-xl flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-white">{d.name}</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Host: {d.ipAddress}</p>
+                <div key={d.id} className="bg-rose-950/20 border border-rose-500/10 p-4 rounded-xl flex flex-col justify-between gap-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-white truncate">{d.name}</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5 truncate">Host: {d.ipAddress}</p>
+                    </div>
+                    <div className="flex items-center gap-1 text-rose-500 font-extrabold text-xs shrink-0">
+                      <BatteryCharging size={14} />
+                      <span>{d.battery}%</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 text-rose-500 font-extrabold text-sm">
-                    <BatteryCharging size={16} />
-                    <span>{d.battery}%</span>
-                  </div>
+                  <Link
+                    to={`/devices/${d.id}`}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-[10px] font-bold text-rose-400 rounded-lg transition-colors duration-150 cursor-pointer"
+                  >
+                    <Eye size={12} />
+                    <span>Pokaż Szczegóły</span>
+                  </Link>
                 </div>
               ))}
           </div>
